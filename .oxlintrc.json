@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "env": { "browser": true, "es2024": true },
+  "ignorePatterns": ["dist/**"],
+  "rules": {
+    // Styles are imported for their side effect.
+    "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }],
+    // Screens are re-rendered with innerHTML, and startApp may run again on the same page:
+    // assigning on* handlers replaces the previous handler instead of stacking listeners.
+    "unicorn/prefer-add-event-listener": "off"
+  },
+  "overrides": [
+    {
+      // Test doubles implement only the part of a browser API that the code uses.
+      "files": ["**/*.test.ts"],
+      "rules": { "typescript/no-unsafe-type-assertion": "off" }
+    }
+  ]
+}

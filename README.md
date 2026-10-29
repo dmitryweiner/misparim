@@ -1,28 +1,47 @@
-# Миспарим — числа на иврите
+# [Misparim — Hebrew numbers](https://dmitryweiner.github.io/misparim/)
 
-Исходный код опубликованного приложения:
-https://hebrew-numbers-play.dmitry-weiner.chatgpt.site
-Версия: 1265f5932900fca9c68f208b74682dfe312e09c0
+A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and back.
 
-## Запуск
-Распакуйте архив, откройте терминал в папке hebrew-numbers и выполните:
+## Features
 
-    python3 -m http.server 8000
+- Four modes: digits → words and words → digits, picking from four choices or typing the answer.
+- Ranges: 1–10, 10–100, 100–999. Feminine and masculine forms.
+- Hints; answers with a hint are counted separately.
+- Automatic advance to the next question (can be paused or turned off).
+- On-screen Hebrew keyboard.
+- Interface in English, Russian and Ukrainian: picked from the browser language
+  (English by default) and switchable in the header.
+- Settings and the chosen language are saved in localStorage.
+- Works offline (PWA): after the first visit everything is cached, and the app can be
+  installed on a phone. A new version takes over once all tabs with the old one are closed.
+- Typed answers ignore niqqud and extra spaces and accept common full and short spellings.
+- Speech uses the browser's built-in synthesizer and needs a Hebrew voice installed;
+  availability and quality depend on the browser and the device.
 
-В Windows можно использовать: py -m http.server 8000
-Откройте http://localhost:8000 в браузере.
-Сборка, npm, серверная база и API-ключи не нужны.
-Для размещения загрузите содержимое папки на любой статический хостинг.
+## Development
 
-## Возможности
-Четыре режима: цифры → слова и слова → цифры, с выбором или вводом ответа.
-Диапазоны: 1–10, 10–100, 100–999. Женский и мужской род.
-Подсказки, отдельный счёт ответов с подсказкой, автоматический переход
-с возможностью отключения, экранная ивритская клавиатура.
-Озвучивание через встроенный синтезатор браузера требует установленного
-ивритского голоса; доступность и качество зависят от браузера и устройства.
+Requires Node.js 24 (see `.node-version`; with fnm: `fnm use`).
 
-## Файлы
-index.html — страница; style.css — оформление; app.js — игровая логика;
-numbers.js — образование и проверка числительных.
-Шрифт и его лицензия включены: print-sans.ttf, NOTO-SANS-LICENSE.txt.
+```sh
+npm ci
+npm run dev      # dev server
+npm test         # unit tests
+npm run lint     # oxlint and Prettier check
+npm run format   # format with Prettier
+npm run build    # type check and build into dist/
+npm run preview  # preview the build
+```
+
+The app is static: the contents of `dist/` can be served from any static hosting.
+GitHub Actions lints, tests and builds the project on every push and pull request;
+a push to `main` publishes the build to GitHub Pages.
+
+Development rules (TDD, module layout) are in [AGENTS.md](AGENTS.md).
+
+## License
+
+The code is licensed under the [GNU General Public License v3.0 or later](LICENSE).
+
+The bundled Noto Sans Hebrew font (`src/fonts/print-sans.ttf`) is licensed under the
+SIL Open Font License 1.1 ([public/NOTO-SANS-LICENSE.txt](public/NOTO-SANS-LICENSE.txt));
+keep the license file when redistributing.

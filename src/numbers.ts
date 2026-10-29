@@ -1,5 +1,9 @@
 export type Gender = 'f' | 'm';
 
+export function isGender(value: unknown): value is Gender {
+  return value === 'f' || value === 'm';
+}
+
 export const MIN_NUMBER = 1;
 export const MAX_NUMBER = 999;
 
@@ -79,7 +83,7 @@ function withAnd(word: string, vocalized: boolean): string {
 
 /** Hebrew spelling of a number from 1 to 999, optionally with niqqud. */
 export function words(n: number, gender: Gender = 'f', vocalized = false): string {
-  if (!Number.isInteger(n) || n < MIN_NUMBER || n > MAX_NUMBER || !['f', 'm'].includes(gender)) {
+  if (!Number.isInteger(n) || n < MIN_NUMBER || n > MAX_NUMBER || !isGender(gender)) {
     throw new Error('Invalid number or gender');
   }
   const units = gender === 'f' ? (vocalized ? feminineVocalized : feminine) : vocalized ? masculineVocalized : masculine;

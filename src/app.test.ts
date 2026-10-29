@@ -6,8 +6,10 @@ import { startApp } from './app';
 import { seededRandom } from './game';
 import { words } from './numbers';
 import type { Speech } from './speech';
+import { loadSettings, saveSettings, DEFAULT_SETTINGS, type KeyValueStorage } from './storage';
 
 const html = readFileSync(resolve(__dirname, '../index.html'), 'utf8');
+const head = html.slice(html.indexOf('<head>') + 6, html.indexOf('</head>')).replace(/<script[^>]*><\/script>/g, '');
 const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>'));
 
 function $<T extends Element = HTMLElement>(selector: string, type?: abstract new () => T): T {
@@ -36,8 +38,20 @@ function fakeSpeech(voices: Partial<SpeechSynthesisVoice>[]) {
   } satisfies Speech;
 }
 
+class MemoryStorage implements KeyValueStorage {
+  data = new Map<string, string>();
+  getItem(key: string) {
+    return this.data.get(key) ?? null;
+  }
+  setItem(key: string, value: string) {
+    this.data.set(key, value);
+  }
+}
+
 let stop: (() => void) | undefined;
-const start = (speech: Speech | null = null) => (stop = startApp({ random: seededRandom(5), speech }));
+let storage: MemoryStorage;
+const start = (speech: Speech | null = null, languages: readonly string[] = []) =>
+  (stop = startApp({ random: seededRandom(5), speech, storage, languages }));
 
 /** The number asked in the current question. */
 function currentNumber(): number {
@@ -64,7 +78,10 @@ function typeAnswer(value: string) {
 }
 
 beforeEach(() => {
+  document.head.innerHTML = head;
   document.body.innerHTML = body;
+  document.documentElement.lang = 'en';
+  storage = new MemoryStorage();
   vi.useFakeTimers();
   vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
 });
@@ -79,7 +96,7 @@ afterEach(() => {
 describe('choice mode', () => {
   it('starts with the first of ten questions and four choices', () => {
     start();
-    expect(textOf('.round')).toContain('Вопрос 1 из 10');
+    expect(textOf('.round')).toContain('Question 1 of 10');
     expect(document.querySelectorAll('[data-number]')).toHaveLength(4);
     expect($('[data-direction="forward"]').classList.contains('active')).toBe(true);
   });
@@ -93,11 +110,11 @@ describe('choice mode', () => {
   it('counts a correct answer and advances automatically', () => {
     start();
     chooseCorrect();
-    expect(textOf('.feedback strong')).toBe('Верно!');
-    expect(textOf('#stats')).toContain('Самостоятельно: 1');
-    expect(textOf('#next')).toBe('Далее · 1,5 с');
+    expect(textOf('.feedback strong')).toBe('Correct!');
+    expect(textOf('#stats')).toContain('On your own: 1');
+    expect(textOf('#next')).toBe('Next · 1.5 s');
     vi.advanceTimersByTime(1500);
-    expect(textOf('.round')).toContain('Вопрос 2 из 10');
+    expect(textOf('.round')).toContain('Question 2 of 10');
   });
 
   it('records a mistake and waits longer', () => {
@@ -105,11 +122,11 @@ describe('choice mode', () => {
     chooseWrong();
     expect(document.querySelector('.choice.wrong')).not.toBeNull();
     expect(document.querySelector('.choice.correct')).not.toBeNull();
-    expect(textOf('#stats')).toContain('Ошибки: 1');
+    expect(textOf('#stats')).toContain('Mistakes: 1');
     vi.advanceTimersByTime(1500);
-    expect(textOf('.round')).toContain('Вопрос 1 из 10');
+    expect(textOf('.round')).toContain('Question 1 of 10');
     vi.advanceTimersByTime(1500);
-    expect(textOf('.round')).toContain('Вопрос 2 из 10');
+    expect(textOf('.round')).toContain('Question 2 of 10');
   });
 
   it('counts answers with a hint separately', () => {
@@ -117,8 +134,8 @@ describe('choice mode', () => {
     click('#hint');
     expect($('#hinttext').hidden).toBe(false);
     chooseCorrect();
-    expect(textOf('.feedback strong')).toBe('Верно, с подсказкой!');
-    expect(textOf('#stats')).toContain('Самостоятельно: 0 · С подсказкой: 1');
+    expect(textOf('.feedback strong')).toBe('Correct, with a hint!');
+    expect(textOf('#stats')).toContain('On your own: 0 · With a hint: 1');
   });
 
   it('pauses the auto-advance', () => {
@@ -126,10 +143,10 @@ describe('choice mode', () => {
     chooseCorrect();
     click('#pause');
     vi.advanceTimersByTime(5000);
-    expect(textOf('.round')).toContain('Вопрос 1 из 10');
-    expect(textOf('#pause')).toBe('На паузе');
+    expect(textOf('.round')).toContain('Question 1 of 10');
+    expect(textOf('#pause')).toBe('Paused');
     click('#next');
-    expect(textOf('.round')).toContain('Вопрос 2 из 10');
+    expect(textOf('.round')).toContain('Question 2 of 10');
   });
 
   it('waits for the next button when auto-advance is off', () => {
@@ -137,9 +154,9 @@ describe('choice mode', () => {
     $('#auto', HTMLInputElement).click();
     chooseCorrect();
     expect($('#pause').hidden).toBe(true);
-    expect(textOf('#next')).toBe('Далее');
+    expect(textOf('#next')).toBe('Next');
     vi.advanceTimersByTime(5000);
-    expect(textOf('.round')).toContain('Вопрос 1 из 10');
+    expect(textOf('.round')).toContain('Question 1 of 10');
   });
 
   it('shows the result with numbers to review after ten questions', () => {
@@ -150,11 +167,11 @@ describe('choice mode', () => {
       chooseCorrect();
       vi.advanceTimersByTime(1500);
     }
-    expect(textOf('.result h1')).toBe('Раунд завершён');
+    expect(textOf('.result h1')).toBe('Round complete');
     expect(textOf('.big')).toContain('9');
     expect(document.querySelectorAll('.review p')).toHaveLength(1);
     click('#again');
-    expect(textOf('.round')).toContain('Вопрос 1 из 10');
+    expect(textOf('.round')).toContain('Question 1 of 10');
   });
 });
 
@@ -165,7 +182,7 @@ describe('settings', () => {
     const level = $('#level', HTMLSelectElement);
     level.value = '3';
     level.dispatchEvent(new Event('change'));
-    expect(textOf('#stats')).toContain('Самостоятельно: 0');
+    expect(textOf('#stats')).toContain('On your own: 0');
     expect(currentNumber()).toBeGreaterThanOrEqual(100);
   });
 
@@ -174,7 +191,7 @@ describe('settings', () => {
     const gender = $('#gender', HTMLSelectElement);
     gender.value = 'm';
     gender.dispatchEvent(new Event('change'));
-    expect(textOf('.tag')).toBe('Мужская форма');
+    expect(textOf('.tag')).toBe('Masculine form');
     const n = currentNumber();
     expect(textOf(`[data-number="${n}"]`)).toBe(words(n, 'm'));
   });
@@ -192,7 +209,7 @@ describe('reverse direction', () => {
     start(fakeSpeech([{ lang: 'en-US' }]));
     click('[data-direction="reverse"]');
     expect($('#listen', HTMLButtonElement).disabled).toBe(true);
-    expect(textOf('#voice-status')).toContain('Нет доступного голоса иврита');
+    expect(textOf('#voice-status')).toContain('No Hebrew voice is available');
   });
 
   it('speaks the vocalized number with a Hebrew voice', () => {
@@ -211,7 +228,7 @@ describe('reverse direction', () => {
     chooseCorrect();
     click('#listen');
     vi.advanceTimersByTime(5000);
-    expect(textOf('.round')).toContain('Вопрос 1 из 10');
+    expect(textOf('.round')).toContain('Question 1 of 10');
   });
 });
 
@@ -223,24 +240,24 @@ describe('input mode', () => {
 
   it('accepts the number written in Hebrew', () => {
     typeAnswer(words(currentNumber(), 'f'));
-    expect(textOf('.feedback strong')).toBe('Верно!');
+    expect(textOf('.feedback strong')).toBe('Correct!');
     expect($('#answer', HTMLInputElement).classList.contains('correct')).toBe(true);
   });
 
   it('validates the answer before checking', () => {
     typeAnswer('');
-    expect(textOf('#input-error')).toBe('Сначала введи ответ.');
+    expect(textOf('#input-error')).toBe('Enter an answer first.');
     typeAnswer('12');
-    expect(textOf('#input-error')).toContain('словами на иврите');
+    expect(textOf('#input-error')).toContain('in Hebrew words');
     expect(document.querySelector('.feedback')).toBeNull();
   });
 
   it('accepts digits in the reverse direction', () => {
     click('[data-direction="reverse"]');
     typeAnswer('abc');
-    expect(textOf('#input-error')).toContain('цифрами');
+    expect(textOf('#input-error')).toContain('in digits');
     typeAnswer(String(currentNumber()));
-    expect(textOf('.feedback strong')).toBe('Верно!');
+    expect(textOf('.feedback strong')).toBe('Correct!');
   });
 
   it('types with the on-screen keyboard', () => {
@@ -251,5 +268,127 @@ describe('input mode', () => {
     click('[data-key="back"]');
     click('[data-key=" "]');
     expect($('#answer', HTMLInputElement).value).toBe('ש ');
+  });
+});
+
+describe('settings storage', () => {
+  it('restores saved settings', () => {
+    saveSettings(storage, { locale: null, level: '3', gender: 'm', autoNext: false });
+    start();
+    expect($('#level', HTMLSelectElement).value).toBe('3');
+    expect($('#gender', HTMLSelectElement).value).toBe('m');
+    expect($('#auto', HTMLInputElement).checked).toBe(false);
+    expect(currentNumber()).toBeGreaterThanOrEqual(100);
+    expect(textOf('.tag')).toBe('Masculine form');
+  });
+
+  it('saves changed settings', () => {
+    start();
+    const level = $('#level', HTMLSelectElement);
+    level.value = '2';
+    level.dispatchEvent(new Event('change'));
+    $('#auto', HTMLInputElement).click();
+    expect(loadSettings(storage)).toEqual({ ...DEFAULT_SETTINGS, level: '2', autoNext: false });
+  });
+});
+
+describe('language', () => {
+  it('is English by default', () => {
+    start();
+    expect(document.documentElement.lang).toBe('en');
+    expect(document.title).toBe('Misparim · Hebrew numbers');
+    expect($('[data-locale="en"]').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('follows the browser language', () => {
+    start(null, ['uk-UA', 'en']);
+    expect(document.documentElement.lang).toBe('uk');
+    expect(textOf('.round')).toContain('Запитання 1 з 10');
+    expect(textOf('[data-method="choice"]')).toBe('Обрати відповідь');
+  });
+
+  it('prefers the saved language over the browser language', () => {
+    saveSettings(storage, { ...DEFAULT_SETTINGS, locale: 'ru' });
+    start(null, ['uk-UA']);
+    expect(document.documentElement.lang).toBe('ru');
+  });
+
+  it('switches the page language and remembers it', () => {
+    start();
+    click('[data-locale="ru"]');
+    expect(document.documentElement.lang).toBe('ru');
+    expect(document.title).toBe('Миспарим · Числа на иврите');
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toContain('Тренажёр');
+    expect(textOf('summary')).toBe('Настройки тренировки');
+    expect(textOf('#level option')).toBe('1–10 · первые числа');
+    expect($('nav').getAttribute('aria-label')).toBe('Направление');
+    expect(textOf('.round')).toContain('Вопрос 1 из 10');
+    expect($('[data-locale="ru"]').getAttribute('aria-pressed')).toBe('true');
+    expect($('[data-locale="en"]').getAttribute('aria-pressed')).toBe('false');
+    expect(loadSettings(storage).locale).toBe('ru');
+  });
+
+  it('keeps the round going when the language changes', () => {
+    start();
+    chooseCorrect();
+    vi.advanceTimersByTime(1500);
+    const n = currentNumber();
+    click('[data-locale="uk"]');
+    expect(textOf('.round')).toContain('Запитання 2 з 10');
+    expect(textOf('#stats')).toContain('Самостійно: 1');
+    expect(currentNumber()).toBe(n);
+  });
+
+  it('keeps the answer, the feedback and the countdown when the language changes', () => {
+    start();
+    chooseWrong();
+    click('[data-locale="ru"]');
+    expect(textOf('.feedback strong')).toBe('Запомним правильный ответ:');
+    expect(textOf('#next')).toBe('Далее · 3 с');
+    expect(document.querySelector('.choice.wrong')).not.toBeNull();
+    expect(document.querySelectorAll('[data-number]:disabled')).toHaveLength(4);
+    vi.advanceTimersByTime(3000);
+    expect(textOf('.round')).toContain('Вопрос 2 из 10');
+  });
+
+  it('keeps the pause when the language changes', () => {
+    start();
+    chooseCorrect();
+    click('#pause');
+    click('[data-locale="ru"]');
+    expect(textOf('#pause')).toBe('На паузе');
+    expect(textOf('#next')).toBe('Далее');
+  });
+
+  it('keeps the typed answer and the open hint', () => {
+    start();
+    click('[data-method="input"]');
+    click('#hint');
+    const field = $('#answer', HTMLInputElement);
+    field.value = 'שלו';
+    field.dispatchEvent(new Event('input'));
+    click('[data-locale="ru"]');
+    expect($('#answer', HTMLInputElement).value).toBe('שלו');
+    expect($('#hinttext').hidden).toBe(false);
+    expect(textOf('#hinttext')).toMatch(/Первая буква|Начни с/);
+  });
+
+  it('translates the result screen', () => {
+    start();
+    for (let i = 0; i < 10; i++) {
+      chooseCorrect();
+      vi.advanceTimersByTime(1500);
+    }
+    expect(textOf('.result h1')).toBe('All ten on your own!');
+    click('[data-locale="ru"]');
+    expect(textOf('.result h1')).toBe('Все десять — самостоятельно!');
+    expect(textOf('#again')).toBe('Ещё 10 вопросов');
+  });
+
+  it('translates the on-screen keyboard', () => {
+    start(null, ['ru']);
+    click('[data-method="input"]');
+    expect(textOf('[data-key=" "]')).toBe('רווח · пробел');
+    expect(textOf('[data-key="back"]')).toBe('Удалить');
   });
 });

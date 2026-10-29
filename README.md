@@ -9,6 +9,9 @@ A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and ba
 - Hints; answers with a hint are counted separately.
 - Automatic advance to the next question (can be paused or turned off).
 - On-screen Hebrew keyboard.
+- Interface in English, Russian and Ukrainian: picked from the browser language
+  (English by default) and switchable in the header.
+- Settings and the chosen language are saved in localStorage.
 - Typed answers ignore niqqud and extra spaces and accept common full and short spellings.
 - Speech uses the browser's built-in synthesizer and needs a Hebrew voice installed;
   availability and quality depend on the browser and the device.

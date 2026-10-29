@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import golden from './fixtures/words.golden.json';
-import { accepts, normalize, words, type Gender } from './numbers';
+import { accepts, isGender, normalize, words, type Gender } from './numbers';
 
 // Generated from the original numbers.js before the TypeScript migration.
 const goldenLists: Record<string, string[]> = golden;
@@ -48,6 +48,15 @@ describe('words', () => {
 
   it('rejects an unknown gender', () => {
     expect(() => words(1, 'x' as Gender)).toThrow('Invalid number or gender');
+  });
+});
+
+describe('isGender', () => {
+  it('accepts only f and m', () => {
+    expect(isGender('f')).toBe(true);
+    expect(isGender('m')).toBe(true);
+    expect(isGender('x')).toBe(false);
+    expect(isGender(undefined)).toBe(false);
   });
 });
 

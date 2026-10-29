@@ -12,6 +12,8 @@ export interface Question {
   hint: boolean;
   correct: boolean;
   draft: string;
+  /** The choice picked in choice mode, to mark it after answering. */
+  picked: number | null;
 }
 
 /** Small deterministic PRNG (mulberry32) for tests. */
@@ -64,5 +66,5 @@ export function createDeck(level: Level, rng: Random): Question[] {
     Array.from({ length: hi - lo + 1 }, (_, i) => lo + i),
     rng,
   ).slice(0, ROUND_LENGTH);
-  return numbers.map((n) => ({ n, choices: choicesFor(n, level, rng), hint: false, correct: false, draft: '' }));
+  return numbers.map((n) => ({ n, choices: choicesFor(n, level, rng), hint: false, correct: false, draft: '', picked: null }));
 }

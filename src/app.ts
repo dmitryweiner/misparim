@@ -1,6 +1,6 @@
 import { isolateHebrew } from './bidi';
 import { createDeck, isLevel, ROUND_LENGTH, type Direction, type Level, type Method, type Question, type Random } from './game';
-import { detectLocale, LOCALES, messages, staticText, type Locale, type Messages } from './i18n';
+import { detectLocale, isLocale, messages, staticText, type Locale, type Messages } from './i18n';
 import { accepts, words, type Gender } from './numbers';
 import { findHebrewVoice, type Speech } from './speech';
 import { loadSettings, saveSettings, type KeyValueStorage, type Settings } from './storage';
@@ -62,7 +62,8 @@ function translatePage(locale: Locale, t: Messages) {
     const text = staticText(t, el.dataset.i18nLabel ?? '');
     if (text !== undefined) el.setAttribute('aria-label', text);
   }
-  markActive('locale', locale);
+  const select = document.querySelector('#locale');
+  if (select instanceof HTMLSelectElement) select.value = locale;
 }
 
 /** Starts the game on the current page; returns a function that removes global listeners. */
@@ -72,6 +73,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   const gender = required('#gender', HTMLSelectElement);
   const auto = required('#auto', HTMLInputElement);
   const settingsPanel = required('#settings', HTMLDetailsElement);
+  const localeSelect = required('#locale', HTMLSelectElement);
 
   let settings: Settings = loadSettings(storage);
   let locale: Locale = detectLocale(settings.locale, languages);
@@ -389,12 +391,9 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
     refreshVoiceUI();
   };
 
-  for (const b of document.querySelectorAll<HTMLElement>('[data-locale]')) {
-    b.onclick = () => {
-      const picked = LOCALES.find((l) => l === b.dataset.locale);
-      if (picked) setLocale(picked);
-    };
-  }
+  localeSelect.onchange = () => {
+    if (isLocale(localeSelect.value)) setLocale(localeSelect.value);
+  };
   for (const b of document.querySelectorAll<HTMLElement>('[data-direction]')) {
     b.onclick = () => {
       direction = b.dataset.direction === 'reverse' ? 'reverse' : 'forward';

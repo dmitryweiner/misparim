@@ -25,6 +25,7 @@ function selectLocale(locale: string) {
   select.dispatchEvent(new Event('change'));
 }
 const textOf = (selector: string) => $(selector).textContent ?? '';
+const setHash = (hash: string) => history.replaceState(null, '', hash);
 
 class FakeUtterance {
   lang = '';
@@ -88,6 +89,7 @@ beforeEach(() => {
   document.body.innerHTML = body;
   document.documentElement.lang = 'en';
   storage = new MemoryStorage();
+  history.replaceState(null, '', '/');
   vi.useFakeTimers();
   vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
 });
@@ -235,6 +237,58 @@ describe('reverse direction', () => {
     click('#listen');
     vi.advanceTimersByTime(5000);
     expect(textOf('.round')).toContain('Question 1 of 10');
+  });
+});
+
+describe('direction in the URL', () => {
+  it('opens the direction named in the hash', () => {
+    setHash('#word-first');
+    start();
+    expect($('[data-direction="reverse"]').classList.contains('active')).toBe(true);
+    expect($('.stimulus').classList.contains('he')).toBe(true);
+  });
+
+  it('starts with digits first for an unknown hash', () => {
+    setHash('#unknown');
+    start();
+    expect($('[data-direction="forward"]').classList.contains('active')).toBe(true);
+  });
+
+  it('writes the chosen direction into the hash without adding history entries', () => {
+    start();
+    const entries = history.length;
+    click('[data-direction="reverse"]');
+    expect(location.hash).toBe('#word-first');
+    click('[data-direction="forward"]');
+    expect(location.hash).toBe('#number-first');
+    expect(history.length).toBe(entries);
+  });
+
+  it('switches the direction and starts a new round when the hash changes', () => {
+    start();
+    chooseCorrect();
+    setHash('#word-first');
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect($('[data-direction="reverse"]').classList.contains('active')).toBe(true);
+    expect(textOf('.round')).toContain('Question 1 of 10');
+    expect(document.querySelector('.feedback')).toBeNull();
+  });
+
+  it('keeps the round when the hash changes to the same direction', () => {
+    setHash('#word-first');
+    start();
+    chooseCorrect();
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(document.querySelector('.feedback')).not.toBeNull();
+  });
+
+  it('stops listening to the hash after the app is stopped', () => {
+    start();
+    stop?.();
+    stop = undefined;
+    setHash('#word-first');
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect($('[data-direction="forward"]').classList.contains('active')).toBe(true);
   });
 });
 

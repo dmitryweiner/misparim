@@ -5,6 +5,7 @@ A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and ba
 ## Features
 
 - Four modes: digits → words and words → digits, picking from four choices or typing the answer.
+- The direction can be linked to: `#number-first` (digits → words) or `#word-first` (words → digits).
 - Ranges: 1–10, 10–100, 100–999. Feminine and masculine forms.
 - Hints; answers with a hint are counted separately.
 - Automatic advance to the next question (can be paused or turned off).

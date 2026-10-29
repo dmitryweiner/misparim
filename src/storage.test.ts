@@ -27,6 +27,10 @@ describe('settings storage', () => {
     expect(loadSettings(broken)).toEqual(DEFAULT_SETTINGS);
   });
 
+  it('keeps auto-advance off by default', () => {
+    expect(DEFAULT_SETTINGS.autoNext).toBe(false);
+  });
+
   it('saves and loads settings', () => {
     const storage = new MemoryStorage();
     const settings = { locale: 'uk', level: '3', gender: 'm', autoNext: false } as const;

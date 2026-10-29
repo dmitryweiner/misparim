@@ -15,7 +15,7 @@ export type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>;
 export const STORAGE_KEY = 'misparim';
 const VERSION = 1;
 
-export const DEFAULT_SETTINGS: Settings = { locale: null, level: '1', gender: 'f', autoNext: true };
+export const DEFAULT_SETTINGS: Settings = { locale: null, level: '1', gender: 'f', autoNext: false };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 

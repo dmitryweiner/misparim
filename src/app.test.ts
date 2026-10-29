@@ -67,6 +67,9 @@ function currentNumber(): number {
   throw new Error('unknown stimulus');
 }
 
+/** Turns on the auto-advance, which is off by default. */
+const turnOnAutoNext = () => $('#auto', HTMLInputElement).click();
+
 function chooseCorrect() {
   click(`[data-number="${currentNumber()}"]`);
 }
@@ -115,6 +118,7 @@ describe('choice mode', () => {
 
   it('counts a correct answer and advances automatically', () => {
     start();
+    turnOnAutoNext();
     chooseCorrect();
     expect(textOf('.feedback strong')).toBe('Correct!');
     expect(textOf('#stats')).toContain('On your own: 1');
@@ -125,6 +129,7 @@ describe('choice mode', () => {
 
   it('records a mistake and waits longer', () => {
     start();
+    turnOnAutoNext();
     chooseWrong();
     expect(document.querySelector('.choice.wrong')).not.toBeNull();
     expect(document.querySelector('.choice.correct')).not.toBeNull();
@@ -146,6 +151,7 @@ describe('choice mode', () => {
 
   it('pauses the auto-advance', () => {
     start();
+    turnOnAutoNext();
     chooseCorrect();
     click('#pause');
     vi.advanceTimersByTime(5000);
@@ -155,9 +161,9 @@ describe('choice mode', () => {
     expect(textOf('.round')).toContain('Question 2 of 10');
   });
 
-  it('waits for the next button when auto-advance is off', () => {
+  it('waits for the next button by default', () => {
     start();
-    $('#auto', HTMLInputElement).click();
+    expect($('#auto', HTMLInputElement).checked).toBe(false);
     chooseCorrect();
     expect($('#pause').hidden).toBe(true);
     expect(textOf('#next')).toBe('Next');
@@ -168,10 +174,10 @@ describe('choice mode', () => {
   it('shows the result with numbers to review after ten questions', () => {
     start();
     chooseWrong();
-    vi.advanceTimersByTime(3000);
+    click('#next');
     for (let i = 1; i < 10; i++) {
       chooseCorrect();
-      vi.advanceTimersByTime(1500);
+      click('#next');
     }
     expect(textOf('.result h1')).toBe('Round complete');
     expect(textOf('.big')).toContain('9');
@@ -231,6 +237,7 @@ describe('reverse direction', () => {
 
   it('pauses the auto-advance when listening to the answer', () => {
     start(fakeSpeech([{ lang: 'he-IL' }]));
+    turnOnAutoNext();
     chooseCorrect();
     click('#listen');
     vi.advanceTimersByTime(5000);
@@ -293,8 +300,8 @@ describe('settings storage', () => {
     const level = $('#level', HTMLSelectElement);
     level.value = '2';
     level.dispatchEvent(new Event('change'));
-    $('#auto', HTMLInputElement).click();
-    expect(loadSettings(storage)).toEqual({ ...DEFAULT_SETTINGS, level: '2', autoNext: false });
+    turnOnAutoNext();
+    expect(loadSettings(storage)).toEqual({ ...DEFAULT_SETTINGS, level: '2', autoNext: true });
   });
 });
 
@@ -343,7 +350,7 @@ describe('language', () => {
   it('keeps the round going when the language changes', () => {
     start();
     chooseCorrect();
-    vi.advanceTimersByTime(1500);
+    click('#next');
     const n = currentNumber();
     selectLocale('uk');
     expect(textOf('.round')).toContain('Запитання 2 з 10');
@@ -353,6 +360,7 @@ describe('language', () => {
 
   it('keeps the answer, the feedback and the countdown when the language changes', () => {
     start();
+    turnOnAutoNext();
     chooseWrong();
     selectLocale('ru');
     expect(textOf('.feedback strong')).toBe('Запомним правильный ответ:');
@@ -365,6 +373,7 @@ describe('language', () => {
 
   it('keeps the pause when the language changes', () => {
     start();
+    turnOnAutoNext();
     chooseCorrect();
     click('#pause');
     selectLocale('ru');
@@ -389,7 +398,7 @@ describe('language', () => {
     start();
     for (let i = 0; i < 10; i++) {
       chooseCorrect();
-      vi.advanceTimersByTime(1500);
+      click('#next');
     }
     expect(textOf('.result h1')).toBe('All ten on your own!');
     selectLocale('ru');

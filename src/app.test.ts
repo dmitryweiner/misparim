@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startApp } from './app';
 import { seededRandom } from './game';
+import { LOCALE_NAMES, LOCALES } from './i18n';
 import { words } from './numbers';
 import type { Speech } from './speech';
 import { loadSettings, saveSettings, DEFAULT_SETTINGS, type KeyValueStorage } from './storage';
@@ -18,6 +19,11 @@ function $<T extends Element = HTMLElement>(selector: string, type?: abstract ne
   return el as T;
 }
 const click = (selector: string) => $(selector).click();
+function selectLocale(locale: string) {
+  const select = $('#locale', HTMLSelectElement);
+  select.value = locale;
+  select.dispatchEvent(new Event('change'));
+}
 const textOf = (selector: string) => $(selector).textContent ?? '';
 
 class FakeUtterance {
@@ -293,25 +299,22 @@ describe('settings storage', () => {
 });
 
 describe('language', () => {
-  it('labels the switcher with short language codes', () => {
-    const labels = [...document.querySelectorAll('[data-locale]')].map((b) => [b.getAttribute('data-locale'), b.textContent]);
-    expect(labels).toEqual([
-      ['en', 'EN'],
-      ['ru', 'RU'],
-      ['uk', 'UA'],
-    ]);
+  it('offers the languages in a dropdown, each named in its own language', () => {
+    const options = [...$('#locale', HTMLSelectElement).options].map((o) => [o.value, o.lang, o.textContent]);
+    expect(options).toEqual(LOCALES.map((l) => [l, l, LOCALE_NAMES[l]]));
   });
 
   it('is English by default', () => {
     start();
     expect(document.documentElement.lang).toBe('en');
     expect(document.title).toBe('Misparim · Hebrew numbers');
-    expect($('[data-locale="en"]').getAttribute('aria-pressed')).toBe('true');
+    expect($('#locale', HTMLSelectElement).value).toBe('en');
   });
 
   it('follows the browser language', () => {
     start(null, ['uk-UA', 'en']);
     expect(document.documentElement.lang).toBe('uk');
+    expect($('#locale', HTMLSelectElement).value).toBe('uk');
     expect(textOf('.round')).toContain('Запитання 1 з 10');
     expect(textOf('[data-method="choice"]')).toBe('Обрати відповідь');
   });
@@ -324,7 +327,7 @@ describe('language', () => {
 
   it('switches the page language and remembers it', () => {
     start();
-    click('[data-locale="ru"]');
+    selectLocale('ru');
     expect(document.documentElement.lang).toBe('ru');
     expect(document.title).toBe('Миспарим · Числа на иврите');
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toContain('Тренажёр');
@@ -332,8 +335,8 @@ describe('language', () => {
     expect(textOf('#level option')).toBe('1–10 · первые числа');
     expect($('nav').getAttribute('aria-label')).toBe('Направление');
     expect(textOf('.round')).toContain('Вопрос 1 из 10');
-    expect($('[data-locale="ru"]').getAttribute('aria-pressed')).toBe('true');
-    expect($('[data-locale="en"]').getAttribute('aria-pressed')).toBe('false');
+    expect($('#locale', HTMLSelectElement).value).toBe('ru');
+    expect($('#locale').getAttribute('aria-label')).toBe('Язык');
     expect(loadSettings(storage).locale).toBe('ru');
   });
 
@@ -342,7 +345,7 @@ describe('language', () => {
     chooseCorrect();
     vi.advanceTimersByTime(1500);
     const n = currentNumber();
-    click('[data-locale="uk"]');
+    selectLocale('uk');
     expect(textOf('.round')).toContain('Запитання 2 з 10');
     expect(textOf('#stats')).toContain('Самостійно: 1');
     expect(currentNumber()).toBe(n);
@@ -351,7 +354,7 @@ describe('language', () => {
   it('keeps the answer, the feedback and the countdown when the language changes', () => {
     start();
     chooseWrong();
-    click('[data-locale="ru"]');
+    selectLocale('ru');
     expect(textOf('.feedback strong')).toBe('Запомним правильный ответ:');
     expect(textOf('#next')).toBe('Далее · 3 с');
     expect(document.querySelector('.choice.wrong')).not.toBeNull();
@@ -364,7 +367,7 @@ describe('language', () => {
     start();
     chooseCorrect();
     click('#pause');
-    click('[data-locale="ru"]');
+    selectLocale('ru');
     expect(textOf('#pause')).toBe('На паузе');
     expect(textOf('#next')).toBe('Далее');
   });
@@ -376,7 +379,7 @@ describe('language', () => {
     const field = $('#answer', HTMLInputElement);
     field.value = 'שלו';
     field.dispatchEvent(new Event('input'));
-    click('[data-locale="ru"]');
+    selectLocale('ru');
     expect($('#answer', HTMLInputElement).value).toBe('שלו');
     expect($('#hinttext').hidden).toBe(false);
     expect(textOf('#hinttext')).toMatch(/Первая буква|Начни с/);
@@ -389,7 +392,7 @@ describe('language', () => {
       vi.advanceTimersByTime(1500);
     }
     expect(textOf('.result h1')).toBe('All ten on your own!');
-    click('[data-locale="ru"]');
+    selectLocale('ru');
     expect(textOf('.result h1')).toBe('Все десять — самостоятельно!');
     expect(textOf('#again')).toBe('Ещё 10 вопросов');
   });

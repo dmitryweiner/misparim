@@ -76,26 +76,13 @@ header {
   gap: 18px;
 }
 .lang {
-  display: flex;
-  gap: 2px;
-  background: #edf1fa;
-  border-radius: 9px;
-  padding: 3px;
-}
-.lang button {
-  border: 0;
-  background: none;
-  color: #65718a;
-  border-radius: 7px;
-  padding: 6px 9px;
+  width: auto;
+  padding: 7px 8px;
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.lang button.active {
-  background: white;
   color: #294edb;
-  box-shadow: 0 2px 7px #17223e12;
+  background: #edf1fa;
+  border-color: #dce1ed;
 }
 main {
   max-width: 1012px;
@@ -532,8 +519,8 @@ footer p {
   .header-note {
     display: none;
   }
-  .lang button {
-    padding: 5px 7px;
+  .lang {
+    padding: 6px;
     font-size: 12px;
   }
   main {

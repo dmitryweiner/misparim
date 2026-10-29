@@ -416,7 +416,7 @@ describe('Hebrew inside interface texts', () => {
 
   it('marks them again after switching the language', () => {
     start();
-    click('[data-locale="ru"]');
+    selectLocale('ru');
     expect(textOf('.gender-note')).toContain('Без существительного');
     expect(hebrewIn('.gender-note')).toEqual(['שני', 'שתי']);
   });

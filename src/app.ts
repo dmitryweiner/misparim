@@ -1,3 +1,4 @@
+import { isolateHebrew } from './bidi';
 import { createDeck, isLevel, ROUND_LENGTH, type Direction, type Level, type Method, type Question, type Random } from './game';
 import { detectLocale, LOCALES, messages, staticText, type Locale, type Messages } from './i18n';
 import { accepts, words, type Gender } from './numbers';
@@ -53,7 +54,9 @@ function translatePage(locale: Locale, t: Messages) {
   document.querySelector('meta[name="description"]')?.setAttribute('content', t.description);
   for (const el of document.querySelectorAll<HTMLElement>('[data-i18n]')) {
     const text = staticText(t, el.dataset.i18n ?? '');
-    if (text !== undefined) el.textContent = text;
+    if (text === undefined) continue;
+    el.textContent = text;
+    isolateHebrew(el);
   }
   for (const el of document.querySelectorAll<HTMLElement>('[data-i18n-label]')) {
     const text = staticText(t, el.dataset.i18nLabel ?? '');
@@ -175,6 +178,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
     const showHint = () => {
       hint.hidden = false;
       hint.textContent = hintText(t, q.n, forward, g);
+      isolateHebrew(hint);
     };
     required('#hint', HTMLButtonElement).onclick = () => {
       if (answered) return;
@@ -187,6 +191,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
       refreshVoiceUI();
     }
     if (answered) showAnswer(q);
+    isolateHebrew(game);
   }
 
   function bindInput(q: Question, forward: boolean) {
@@ -349,6 +354,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
         : '') +
       '</div>';
     required('#again', HTMLButtonElement).onclick = begin;
+    isolateHebrew(game);
   }
 
   function refreshVoiceUI() {

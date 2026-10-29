@@ -2,6 +2,7 @@ import { isolateHebrew } from './bidi';
 import { createDeck, isLevel, ROUND_LENGTH, type Direction, type Level, type Method, type Question, type Random } from './game';
 import { detectLocale, isLocale, messages, staticText, type Locale, type Messages } from './i18n';
 import { accepts, words, type Gender } from './numbers';
+import { directionFromHash, hashForDirection } from './route';
 import { findHebrewVoice, type Speech } from './speech';
 import { loadSettings, saveSettings, type KeyValueStorage, type Settings } from './storage';
 
@@ -78,7 +79,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   let settings: Settings = loadSettings(storage);
   let locale: Locale = detectLocale(settings.locale, languages);
   let t: Messages = messages[locale];
-  let direction: Direction = 'forward';
+  let direction: Direction = directionFromHash(window.location.hash);
   let method: Method = 'choice';
   let deck: Question[] = [];
   let index = 0;
@@ -386,6 +387,14 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
     speech.speak(utterance);
   }
 
+  // Following a link or editing the hash switches the direction; the buttons write it without new history entries.
+  const onHashChange = () => {
+    const value = directionFromHash(window.location.hash);
+    if (value === direction) return;
+    direction = value;
+    begin();
+  };
+
   const onVoicesChanged = () => {
     voice = findHebrewVoice(speech);
     refreshVoiceUI();
@@ -397,6 +406,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   for (const b of document.querySelectorAll<HTMLElement>('[data-direction]')) {
     b.onclick = () => {
       direction = b.dataset.direction === 'reverse' ? 'reverse' : 'forward';
+      history.replaceState(null, '', hashForDirection(direction));
       begin();
     };
   }
@@ -423,11 +433,13 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   voice = findHebrewVoice(speech);
   speech?.addEventListener('voiceschanged', onVoicesChanged);
   window.addEventListener('pagehide', cancelPending);
+  window.addEventListener('hashchange', onHashChange);
   begin();
 
   return () => {
     cancelPending();
     speech?.removeEventListener('voiceschanged', onVoicesChanged);
     window.removeEventListener('pagehide', cancelPending);
+    window.removeEventListener('hashchange', onHashChange);
   };
 }

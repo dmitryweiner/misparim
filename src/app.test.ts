@@ -477,6 +477,12 @@ describe('Hebrew inside interface texts', () => {
     expect(hebrewIn('[data-i18n="checkingText"]')).toEqual(['ו']);
   });
 
+  it('isolates the letters on the direction buttons, so the arrow keeps pointing from digits to words and back', () => {
+    start();
+    expect(hebrewIn('[data-direction="forward"]')).toEqual(['אבג']);
+    expect(hebrewIn('[data-direction="reverse"]')).toEqual(['אבג']);
+  });
+
   it('marks them again after switching the language', () => {
     start();
     selectLocale('ru');

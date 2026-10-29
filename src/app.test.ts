@@ -401,3 +401,28 @@ describe('language', () => {
     expect(textOf('[data-key="back"]')).toBe('Удалить');
   });
 });
+
+const hebrewIn = (selector: string) => [...$(selector).querySelectorAll('span[lang="he"][dir="rtl"]')].map((s) => s.textContent);
+
+describe('Hebrew inside interface texts', () => {
+  it('marks Hebrew words in static texts so they keep their order and font', () => {
+    start();
+    expect(hebrewIn('.gender-note')).toEqual(['שני', 'שתי']);
+    expect(hebrewIn('[data-i18n="checkingText"]')).toEqual(['ו']);
+  });
+
+  it('marks them again after switching the language', () => {
+    start();
+    click('[data-locale="ru"]');
+    expect(textOf('.gender-note')).toContain('Без существительного');
+    expect(hebrewIn('.gender-note')).toEqual(['שני', 'שתי']);
+  });
+
+  it('marks Hebrew in hints and on the keyboard toggle', () => {
+    start();
+    click('[data-method="input"]');
+    click('#hint');
+    expect(hebrewIn('#hinttext')).toHaveLength(1);
+    expect(hebrewIn('#keyboard-toggle')).toEqual(['א', 'ת']);
+  });
+});

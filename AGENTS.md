@@ -44,6 +44,8 @@ Each feature gets its own branch and a pull request on GitHub.
   (`normalize`, `accepts`). `src/fixtures/words.golden.json` holds every spelling
   produced by the original implementation; the test compares against it.
 - `src/game.ts` — ranges, answer choices and round decks; `seededRandom` for tests.
+- `src/bidi.ts` — wraps Hebrew fragments inside interface texts in `lang="he" dir="rtl"`
+  spans (word order in left-to-right text, Hebrew font, screen readers).
 - `src/speech.ts` — finding a Hebrew voice in the browser speech synthesizer.
 - `src/i18n/` — interface languages: `en.ts` (default, defines the `Messages` type),
   `ru.ts`, `uk.ts`; `index.ts` — locale detection and lookup; `plural.ts` — plural forms

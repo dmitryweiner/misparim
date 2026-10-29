@@ -1,4 +1,4 @@
-# Misparim — Hebrew numbers
+# [Misparim — Hebrew numbers](https://dmitryweiner.github.io/misparim/)
 
 A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and back.
 
@@ -28,6 +28,8 @@ npm run preview  # preview the build
 ```
 
 The app is static: the contents of `dist/` can be served from any static hosting.
+GitHub Actions lints, tests and builds the project on every push and pull request;
+a push to `main` publishes the build to GitHub Pages.
 
 Development rules (TDD, module layout) are in [AGENTS.md](AGENTS.md).
 

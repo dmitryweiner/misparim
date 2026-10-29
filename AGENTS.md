@@ -19,6 +19,9 @@ Node.js version is in `.node-version` (`fnm use`).
 - `npm run format` — format the code with Prettier.
 - `npm run build` — type check and build into `dist/`.
 
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and the build on every push and PR;
+a push to `main` publishes `dist/` to GitHub Pages.
+
 ## Test-driven development is mandatory
 
 Every behavior change follows the red → green → refactor cycle:

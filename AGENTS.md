@@ -50,9 +50,11 @@ Each feature gets its own branch and a pull request on GitHub.
   via `Intl.PluralRules`.
 - `src/storage.ts` — settings (language, range, form, auto-advance) in localStorage,
   versioned and validated; unreadable data falls back to defaults.
+- `src/pwa.ts` — service worker registration; `src/sw-plugin.ts` — a Vite plugin that
+  generates `sw.js` with the list of all build files for offline use.
 - `src/app.ts` — DOM and game flow; `src/main.ts` — entry point.
 - `src/style.css` — styles; `src/fonts/` — the Noto Sans Hebrew font.
-- `public/` — files copied to the build as is (font license).
+- `public/` — files copied to the build as is: font license, web app manifest, icons.
 - Tests live next to the code: `*.test.ts`. DOM tests use jsdom
   (`// @vitest-environment jsdom`) and the markup from `index.html`.
 

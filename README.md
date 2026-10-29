@@ -12,6 +12,8 @@ A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and ba
 - Interface in English, Russian and Ukrainian: picked from the browser language
   (English by default) and switchable in the header.
 - Settings and the chosen language are saved in localStorage.
+- Works offline (PWA): after the first visit everything is cached, and the app can be
+  installed on a phone. A new version takes over once all tabs with the old one are closed.
 - Typed answers ignore niqqud and extra spaces and accept common full and short spellings.
 - Speech uses the browser's built-in synthesizer and needs a Hebrew voice installed;
   availability and quality depend on the browser and the device.

@@ -1,0 +1,16 @@
+{
+  "name": "Misparim · Hebrew numbers",
+  "short_name": "Misparim",
+  "description": "Hebrew numbers trainer: digits and words, picking or typing the answer, speech. From 1 to 999.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fc",
+  "theme_color": "#294edb",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

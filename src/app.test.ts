@@ -293,6 +293,15 @@ describe('settings storage', () => {
 });
 
 describe('language', () => {
+  it('labels the switcher with short language codes', () => {
+    const labels = [...document.querySelectorAll('[data-locale]')].map((b) => [b.getAttribute('data-locale'), b.textContent]);
+    expect(labels).toEqual([
+      ['en', 'EN'],
+      ['ru', 'RU'],
+      ['uk', 'UA'],
+    ]);
+  });
+
   it('is English by default', () => {
     start();
     expect(document.documentElement.lang).toBe('en');

@@ -32,8 +32,10 @@
     <main>
       <nav aria-label="Direction" data-i18n-label="directionLabel">
         <button data-direction="forward" class="active">
-          123 → <span lang="he">אבג</span><small data-i18n="forwardHint">Digits → words</small></button
-        ><button data-direction="reverse"><span lang="he">אבג</span> → 123<small data-i18n="reverseHint">Words → digits</small></button>
+          123 → <span lang="he" dir="rtl" class="he">אבג</span><small data-i18n="forwardHint">Digits → words</small></button
+        ><button data-direction="reverse">
+          <span lang="he" dir="rtl" class="he">אבג</span> → 123<small data-i18n="reverseHint">Words → digits</small>
+        </button>
       </nav>
       <div class="workspace">
         <aside>

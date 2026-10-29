@@ -7,19 +7,27 @@ export interface AppOptions {
   speech?: Speech | null;
 }
 
-const HEBREW_LETTERS = [...'אבגדהוזחטיכלמנסעפצקרשתךםןףץ'];
+const HEBREW_LETTERS = 'אבגדהוזחטיכלמנסעפצקרשתךםןףץ'.split('');
 const CORRECT_DELAY = 1500;
 const WRONG_DELAY = 3000;
 const SPEECH_RATE = 0.85;
 
-function required<T extends Element>(selector: string): T {
-  const el = document.querySelector<T>(selector);
-  if (!el) throw new Error(`Element ${selector} not found`);
+function required<T extends Element>(selector: string, type: abstract new () => T): T {
+  const el = document.querySelector(selector);
+  if (!(el instanceof type)) throw new Error(`Element ${selector} not found`);
   return el;
 }
 
 function he(text: string, cls = ''): string {
   return `<span lang="he" dir="rtl" class="he ${cls}">${text}</span>`;
+}
+
+function markActive(attribute: string, value: string) {
+  for (const b of document.querySelectorAll<HTMLElement>(`[data-${attribute}]`)) {
+    const active = b.dataset[attribute] === value;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-pressed', String(active));
+  }
 }
 
 function hintText(n: number, forward: boolean, gender: Gender): string {
@@ -39,11 +47,11 @@ function hintText(n: number, forward: boolean, gender: Gender): string {
 
 /** Starts the game on the current page; returns a function that removes global listeners. */
 export function startApp({ random = Math.random, speech = null }: AppOptions = {}): () => void {
-  const game = required<HTMLElement>('#game');
-  const level = required<HTMLSelectElement>('#level');
-  const gender = required<HTMLSelectElement>('#gender');
-  const auto = required<HTMLInputElement>('#auto');
-  const settings = required<HTMLDetailsElement>('#settings');
+  const game = required('#game', HTMLElement);
+  const level = required('#level', HTMLSelectElement);
+  const gender = required('#gender', HTMLSelectElement);
+  const auto = required('#auto', HTMLInputElement);
+  const settings = required('#settings', HTMLDetailsElement);
 
   let direction: Direction = 'forward';
   let method: Method = 'choice';
@@ -87,14 +95,6 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
     render();
   }
 
-  function markActive(attribute: string, value: string) {
-    for (const b of document.querySelectorAll<HTMLElement>(`[data-${attribute}]`)) {
-      const active = b.dataset[attribute] === value;
-      b.classList.toggle('active', active);
-      b.setAttribute('aria-pressed', String(active));
-    }
-  }
-
   function render() {
     markActive('direction', direction);
     markActive('method', method);
@@ -122,39 +122,41 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
       `<div class="progress" role="progressbar" aria-label="Пройдено вопросов" aria-valuemin="0" aria-valuemax="${ROUND_LENGTH}" aria-valuenow="${index}"><i style="width:${(index * 100) / ROUND_LENGTH}%"></i></div>` +
       `<h1 class="prompt">${forward ? 'Как это число пишется на иврите?' : 'Какое это число?'}</h1>` +
       `<div class="stimulus ${forward ? '' : 'he'}" ${forward ? '' : 'lang="he" dir="rtl"'}>${forward ? q.n : text}</div>` +
-      (forward ? '' : '<div class="speech"><button class="sound" id="listen">▶ Послушать</button><p class="voice-status" id="voice-status" aria-live="polite"></p></div>') +
+      (forward
+        ? ''
+        : '<div class="speech"><button class="sound" id="listen">▶ Послушать</button><p class="voice-status" id="voice-status" aria-live="polite"></p></div>') +
       (method === 'choice' ? choiceHTML : inputHTML) +
       '<div id="feedback" aria-live="polite"></div><button class="hint" id="hint">Подсказка</button><p class="hinttext" id="hinttext" hidden></p>';
 
     for (const b of game.querySelectorAll<HTMLButtonElement>('[data-number]')) b.onclick = () => answer(Number(b.dataset.number));
     if (method === 'input') bindInput(q, forward);
-    required<HTMLButtonElement>('#hint').onclick = () => {
+    required('#hint', HTMLButtonElement).onclick = () => {
       if (answered) return;
       q.hint = true;
-      const hint = required<HTMLElement>('#hinttext');
+      const hint = required('#hinttext', HTMLElement);
       hint.hidden = false;
       hint.textContent = hintText(q.n, forward, g);
     };
     if (!forward) {
-      required<HTMLButtonElement>('#listen').onclick = () => speak(q.n);
+      required('#listen', HTMLButtonElement).onclick = () => speak(q.n);
       refreshVoiceUI();
     }
   }
 
   function bindInput(q: Question, forward: boolean) {
-    const field = required<HTMLInputElement>('#answer');
+    const field = required('#answer', HTMLInputElement);
     field.value = q.draft;
     field.oninput = () => {
       q.draft = field.value;
-      required('#input-error').textContent = '';
+      required('#input-error', HTMLElement).textContent = '';
     };
-    required<HTMLFormElement>('#answer-form').onsubmit = (e) => {
+    required('#answer-form', HTMLFormElement).onsubmit = (e) => {
       e.preventDefault();
       answer(field.value);
     };
     if (!forward) return;
-    const keyboard = required<HTMLElement>('#keyboard');
-    const toggle = required<HTMLButtonElement>('#keyboard-toggle');
+    const keyboard = required('#keyboard', HTMLElement);
+    const toggle = required('#keyboard-toggle', HTMLButtonElement);
     toggle.onclick = () => {
       keyboard.hidden = !keyboard.hidden;
       toggle.setAttribute('aria-expanded', String(!keyboard.hidden));
@@ -184,7 +186,7 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
     let ok: boolean;
     if (method === 'input') {
       const raw = String(value).trim();
-      const error = required('#input-error');
+      const error = required('#input-error', HTMLElement);
       if (!raw) {
         error.textContent = 'Сначала введи ответ.';
         return;
@@ -217,37 +219,37 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
       else if (n === value) b.classList.add('wrong');
     }
     if (method === 'input') {
-      const field = required<HTMLInputElement>('#answer');
+      const field = required('#answer', HTMLInputElement);
       field.readOnly = true;
       field.classList.add(ok ? 'correct' : 'wrong');
-      required<HTMLButtonElement>('#answer-form button').disabled = true;
+      required('#answer-form button', HTMLButtonElement).disabled = true;
       const keyboard = document.querySelector<HTMLElement>('#keyboard');
       const toggle = document.querySelector<HTMLElement>('#keyboard-toggle');
       if (keyboard) keyboard.hidden = true;
       if (toggle) toggle.hidden = true;
     }
-    required('#stats').textContent = statsText();
-    required<HTMLElement>('#hint').hidden = true;
-    required<HTMLElement>('#hinttext').hidden = true;
-    required('#feedback').innerHTML =
+    required('#stats', HTMLElement).textContent = statsText();
+    required('#hint', HTMLElement).hidden = true;
+    required('#hinttext', HTMLElement).hidden = true;
+    required('#feedback', HTMLElement).innerHTML =
       `<div class="feedback ${ok ? 'good' : 'bad'}"><strong>${ok ? (q.hint ? 'Верно, с подсказкой!' : 'Верно!') : 'Запомним правильный ответ:'}</strong>` +
       `<div class="correct-answer">${q.n} = ${he(words(q.n, g))}</div>` +
       '<button class="sound" id="listen">▶ Послушать ответ</button><p class="voice-status" id="voice-status" aria-live="polite"></p>' +
       `<div class="feedback-actions"><button class="primary" id="next">${nextLabel()}</button><button class="pause" id="pause">Пауза</button></div></div>`;
     // Remove the earlier playback controls so every ID remains unique.
     game.querySelector('.speech')?.remove();
-    required<HTMLButtonElement>('#listen').onclick = () => speak(q.n);
+    required('#listen', HTMLButtonElement).onclick = () => speak(q.n);
     refreshVoiceUI();
-    required<HTMLButtonElement>('#next').onclick = next;
-    required<HTMLButtonElement>('#pause').onclick = pauseAdvance;
+    required('#next', HTMLButtonElement).onclick = next;
+    required('#pause', HTMLButtonElement).onclick = pauseAdvance;
     configureTimer();
   }
 
   function pauseAdvance() {
     clearTimeout(timer);
     timer = undefined;
-    required('#next').textContent = nextLabel();
-    const pause = required<HTMLButtonElement>('#pause');
+    required('#next', HTMLElement).textContent = nextLabel();
+    const pause = required('#pause', HTMLButtonElement);
     pause.textContent = 'На паузе';
     pause.disabled = true;
   }
@@ -257,11 +259,11 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
     timer = undefined;
     if (!answered || index >= ROUND_LENGTH) return;
     const q = current();
-    const pause = required<HTMLButtonElement>('#pause');
+    const pause = required('#pause', HTMLButtonElement);
     pause.hidden = !auto.checked;
     pause.disabled = false;
     pause.textContent = 'Пауза';
-    required('#next').textContent = nextLabel() + (auto.checked ? ` · ${q.correct ? '1,5' : '3'} с` : '');
+    required('#next', HTMLElement).textContent = nextLabel() + (auto.checked ? ` · ${q.correct ? '1,5' : '3'} с` : '');
     if (auto.checked) timer = setTimeout(next, q.correct ? CORRECT_DELAY : WRONG_DELAY);
   }
 
@@ -281,9 +283,11 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
       `<div class="big">${score}<span style="font-size:20px"> / ${ROUND_LENGTH}</span></div>` +
       `<div class="result-counts"><span>Самостоятельно: ${score}</span><span>С подсказкой: ${helped}</span><span>Ошибки: ${errors.length}</span></div>` +
       '<button class="primary" id="again">Ещё 10 вопросов</button>' +
-      (review.length ? `<div class="review"><b>Повтори эти числа</b>${review.map((n) => `<p><b>${n}</b>${he(words(n, g))}</p>`).join('')}</div>` : '') +
+      (review.length
+        ? `<div class="review"><b>Повтори эти числа</b>${review.map((n) => `<p><b>${n}</b>${he(words(n, g))}</p>`).join('')}</div>`
+        : '') +
       '</div>';
-    required<HTMLButtonElement>('#again').onclick = begin;
+    required('#again', HTMLButtonElement).onclick = begin;
   }
 
   function refreshVoiceUI() {
@@ -291,7 +295,9 @@ export function startApp({ random = Math.random, speech = null }: AppOptions = {
     const status = document.querySelector('#voice-status');
     if (!button || !status) return;
     button.disabled = !voice;
-    status.textContent = voice ? '' : 'Нет доступного голоса иврита. Добавь его в настройках синтеза речи устройства; поддержка зависит от браузера.';
+    status.textContent = voice
+      ? ''
+      : 'Нет доступного голоса иврита. Добавь его в настройках синтеза речи устройства; поддержка зависит от браузера.';
   }
 
   function speak(n: number) {

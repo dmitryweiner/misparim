@@ -7,13 +7,47 @@ export const MAX_NUMBER = 999;
 const feminine = ['', 'אחת', 'שתיים', 'שלוש', 'ארבע', 'חמש', 'שש', 'שבע', 'שמונה', 'תשע', 'עשר'];
 const masculine = ['', 'אחד', 'שניים', 'שלושה', 'ארבעה', 'חמישה', 'שישה', 'שבעה', 'שמונה', 'תשעה', 'עשרה'];
 const feminineVocalized = ['', 'אַחַת', 'שְׁתַּיִם', 'שָׁלוֹשׁ', 'אַרְבַּע', 'חָמֵשׁ', 'שֵׁשׁ', 'שֶׁבַע', 'שְׁמוֹנֶה', 'תֵּשַׁע', 'עֶשֶׂר'];
-const masculineVocalized = ['', 'אֶחָד', 'שְׁנַיִם', 'שְׁלוֹשָׁה', 'אַרְבָּעָה', 'חֲמִשָּׁה', 'שִׁשָּׁה', 'שִׁבְעָה', 'שְׁמוֹנָה', 'תִּשְׁעָה', 'עֲשָׂרָה'];
+const masculineVocalized = [
+  '',
+  'אֶחָד',
+  'שְׁנַיִם',
+  'שְׁלוֹשָׁה',
+  'אַרְבָּעָה',
+  'חֲמִשָּׁה',
+  'שִׁשָּׁה',
+  'שִׁבְעָה',
+  'שְׁמוֹנָה',
+  'תִּשְׁעָה',
+  'עֲשָׂרָה',
+];
 // Units in 11–19 take a different vocalization than standalone units.
 const feminineTeenUnits = ['', 'אַחַת', 'שְׁתֵּים', 'שְׁלוֹשׁ', 'אַרְבַּע', 'חֲמֵשׁ', 'שֵׁשׁ', 'שְׁבַע', 'שְׁמוֹנֶה', 'תְּשַׁע'];
 const masculineTeenUnits = ['', 'אַחַד', 'שְׁנֵים', ...masculineVocalized.slice(3, 10)];
 const tens = ['', '', 'עשרים', 'שלושים', 'ארבעים', 'חמישים', 'שישים', 'שבעים', 'שמונים', 'תשעים'];
-const tensVocalized = ['', '', 'עֶשְׂרִים', 'שְׁלוֹשִׁים', 'אַרְבָּעִים', 'חֲמִשִּׁים', 'שִׁשִּׁים', 'שִׁבְעִים', 'שְׁמוֹנִים', 'תִּשְׁעִים'];
-const hundredsVocalized = ['', 'מֵאָה', 'מָאתַיִם', 'שְׁלוֹשׁ מֵאוֹת', 'אַרְבַּע מֵאוֹת', 'חֲמֵשׁ מֵאוֹת', 'שֵׁשׁ מֵאוֹת', 'שְׁבַע מֵאוֹת', 'שְׁמוֹנֶה מֵאוֹת', 'תְּשַׁע מֵאוֹת'];
+const tensVocalized = [
+  '',
+  '',
+  'עֶשְׂרִים',
+  'שְׁלוֹשִׁים',
+  'אַרְבָּעִים',
+  'חֲמִשִּׁים',
+  'שִׁשִּׁים',
+  'שִׁבְעִים',
+  'שְׁמוֹנִים',
+  'תִּשְׁעִים',
+];
+const hundredsVocalized = [
+  '',
+  'מֵאָה',
+  'מָאתַיִם',
+  'שְׁלוֹשׁ מֵאוֹת',
+  'אַרְבַּע מֵאוֹת',
+  'חֲמֵשׁ מֵאוֹת',
+  'שֵׁשׁ מֵאוֹת',
+  'שְׁבַע מֵאוֹת',
+  'שְׁמוֹנֶה מֵאוֹת',
+  'תְּשַׁע מֵאוֹת',
+];
 
 // Common spelling variants mapped to the forms used by words().
 const spellingVariants: Record<string, string> = {
@@ -40,7 +74,7 @@ function at(list: readonly string[], i: number): string {
 /** Prefixes the conjunction ו ("and"); vocalized as וּ before a shva, otherwise וְ. */
 function withAnd(word: string, vocalized: boolean): string {
   if (!vocalized) return 'ו' + word;
-  return (/^שְׁ/.test(word) ? 'וּ' : 'וְ') + word;
+  return (word.startsWith('שְׁ') ? 'וּ' : 'וְ') + word;
 }
 
 /** Hebrew spelling of a number from 1 to 999, optionally with niqqud. */

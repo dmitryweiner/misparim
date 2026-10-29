@@ -21,6 +21,8 @@ Requires Node.js 24 (see `.node-version`; with fnm: `fnm use`).
 npm ci
 npm run dev      # dev server
 npm test         # unit tests
+npm run lint     # oxlint and Prettier check
+npm run format   # format with Prettier
 npm run build    # type check and build into dist/
 npm run preview  # preview the build
 ```

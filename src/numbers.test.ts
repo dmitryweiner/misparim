@@ -43,17 +43,17 @@ describe('words', () => {
   });
 
   it.each([0, 1000, 1.5, NaN])('rejects %s', (n) => {
-    expect(() => words(n)).toThrow();
+    expect(() => words(n)).toThrow('Invalid number or gender');
   });
 
   it('rejects an unknown gender', () => {
-    expect(() => words(1, 'x' as Gender)).toThrow();
+    expect(() => words(1, 'x' as Gender)).toThrow('Invalid number or gender');
   });
 });
 
 describe('normalize', () => {
   it('removes niqqud, direction marks, hyphens and extra spaces', () => {
-    expect(normalize('  ‏עֶשְׂרִים־וְאַחַת  ')).toBe('עשרים ואחת');
+    expect(normalize('  \u200fעֶשְׂרִים־וְאַחַת  ')).toBe('עשרים ואחת');
   });
 
   it('unifies spelling variants, also after ו', () => {

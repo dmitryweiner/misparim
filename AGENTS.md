@@ -15,6 +15,8 @@ Node.js version is in `.node-version` (`fnm use`).
 - `npm run dev` — dev server.
 - `npm test` — unit tests (`npm run test:watch` for watch mode).
 - `npm run typecheck` — type check.
+- `npm run lint` — oxlint (with type-aware rules) and the Prettier check.
+- `npm run format` — format the code with Prettier.
 - `npm run build` — type check and build into `dist/`.
 
 ## Test-driven development is mandatory
@@ -26,8 +28,8 @@ Every behavior change follows the red → green → refactor cycle:
 2. Write the minimal code that makes the test pass.
 3. Refactor without breaking the tests.
 
-Changes without tests are not accepted. Before finishing, `npm run typecheck`,
-`npm test` and `npm run build` must pass.
+Changes without tests are not accepted. Before finishing, `npm run lint`,
+`npm run typecheck`, `npm test` and `npm run build` must pass.
 
 ## Git workflow
 
@@ -47,6 +49,10 @@ Each feature gets its own branch and a pull request on GitHub.
   (`// @vitest-environment jsdom`) and the markup from `index.html`.
 
 ## Conventions
+
+- Linting uses oxlint, not ESLint: typescript-eslint does not support TypeScript 7.
+  Type-aware rules run through `oxlint-tsgolint`. Rules are configured in `.oxlintrc.json`;
+  a disabled rule needs a comment with the reason.
 
 - Pure logic lives in separate modules without the DOM; randomness (`Random`) and
   browser APIs (`Speech`) are passed as parameters so tests can replace them.

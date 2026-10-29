@@ -21,7 +21,7 @@ describe('shuffle', () => {
     const input = [1, 2, 3, 4, 5, 6];
     const result = shuffle(input, seededRandom(3));
     expect(input).toEqual([1, 2, 3, 4, 5, 6]);
-    expect([...result].sort()).toEqual(input);
+    expect(result.toSorted((a, b) => a - b)).toEqual(input);
   });
 });
 
@@ -57,8 +57,8 @@ describe('choicesFor', () => {
 
   it('prefers look-alike numbers', () => {
     const choices = choicesFor(345, '3', seededRandom(1));
-    const similar = [344, 346, 335, 355, 245, 445, 84];
-    expect(choices.filter((c) => similar.includes(c))).toHaveLength(CHOICE_COUNT - 1);
+    const similar = new Set([344, 346, 335, 355, 245, 445, 84]);
+    expect(choices.filter((c) => similar.has(c))).toHaveLength(CHOICE_COUNT - 1);
   });
 });
 

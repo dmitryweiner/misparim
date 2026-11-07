@@ -53,8 +53,10 @@ Each feature gets its own branch and a pull request on GitHub.
   via `Intl.PluralRules`.
 - `src/storage.ts` — settings (language, range, form, auto-advance) in localStorage,
   versioned and validated; unreadable data falls back to defaults.
-- `src/pwa.ts` — service worker registration; `src/sw-plugin.ts` — a Vite plugin that
-  generates `sw.js` with the list of all build files for offline use.
+- `src/pwa.ts` — service worker registration, an update check on every return to the page
+  and a reload when a new version takes control; `src/sw-plugin.ts` — a Vite plugin that
+  generates `sw.js` with the list of all build files for offline use. The new worker takes
+  over at once (`skipWaiting`): phones never close pages, so a waiting one never activates.
 - `src/app.ts` — DOM and game flow; `src/main.ts` — entry point.
 - `src/style.css` — styles; `src/fonts/` — the Noto Sans Hebrew font.
 - `public/` — files copied to the build as is: font license, web app manifest, icons.

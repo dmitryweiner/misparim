@@ -18,8 +18,8 @@ const at = (h: number, m: number) => (h % 12) * 60 + m;
 const everyFiveMinutes = clockTimes('five');
 
 describe('clock levels', () => {
-  it('step from whole hours to every five minutes', () => {
-    expect(clockTimes('hours')).toEqual([0, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660]);
+  it('step from quarters to every five minutes', () => {
+    expect(CLOCK_LEVELS).toEqual(['quarters', 'five']);
     expect(clockTimes('quarters')).toHaveLength(48);
     expect(clockTimes('quarters').every((t) => t % 15 === 0)).toBe(true);
     expect(everyFiveMinutes).toHaveLength(144);
@@ -29,6 +29,8 @@ describe('clock levels', () => {
   it('are recognized', () => {
     expect(CLOCK_LEVELS.every(isClockLevel)).toBe(true);
     expect(isClockLevel('minutes')).toBe(false);
+    // Whole hours alone were too easy to be a level.
+    expect(isClockLevel('hours')).toBe(false);
     expect(isClockLevel('1')).toBe(false);
   });
 });

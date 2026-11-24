@@ -18,7 +18,7 @@ export const STORAGE_KEY = 'misparim';
 // A new field falls back to its default on older data, so it needs no new version.
 const VERSION = 1;
 
-export const DEFAULT_SETTINGS: Settings = { locale: null, level: '1', gender: 'f', clockLevel: 'hours', autoNext: false };
+export const DEFAULT_SETTINGS: Settings = { locale: null, level: '1', gender: 'f', clockLevel: 'quarters', autoNext: false };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 

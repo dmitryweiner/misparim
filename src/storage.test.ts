@@ -58,10 +58,16 @@ describe('settings storage', () => {
     expect(loadSettings(storage)).toEqual({ ...DEFAULT_SETTINGS, level: '2' });
   });
 
-  it('starts the clock with whole hours, also for settings saved before the clock', () => {
-    expect(DEFAULT_SETTINGS.clockLevel).toBe('hours');
+  it('starts the clock with quarters, also for settings saved before the clock', () => {
+    expect(DEFAULT_SETTINGS.clockLevel).toBe('quarters');
     const storage = new MemoryStorage();
     storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, settings: { locale: 'ru', level: '3', gender: 'm', autoNext: true } }));
-    expect(loadSettings(storage)).toEqual({ locale: 'ru', level: '3', gender: 'm', clockLevel: 'hours', autoNext: true });
+    expect(loadSettings(storage)).toEqual({ locale: 'ru', level: '3', gender: 'm', clockLevel: 'quarters', autoNext: true });
+  });
+
+  it('replaces the removed whole-hours precision with quarters', () => {
+    const storage = new MemoryStorage();
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, settings: { locale: 'uk', clockLevel: 'hours', autoNext: true } }));
+    expect(loadSettings(storage)).toEqual({ ...DEFAULT_SETTINGS, locale: 'uk', clockLevel: 'quarters', autoNext: true });
   });
 });

@@ -22,7 +22,6 @@ export const en = {
   genderF: 'Feminine · plain counting',
   genderM: 'Masculine',
   clockLevelLabel: 'Precision',
-  clockHours: 'Whole hours',
   clockQuarters: 'Quarters and halves',
   clockFive: 'Every 5 minutes',
   autoLabel: 'Move on automatically',

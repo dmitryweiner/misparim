@@ -21,7 +21,6 @@ export const uk = {
   genderF: 'Жіноча · звичайна лічба',
   genderM: 'Чоловіча',
   clockLevelLabel: 'Точність',
-  clockHours: 'Цілі години',
   clockQuarters: 'Чверті й половини',
   clockFive: 'Кожні 5 хвилин',
   autoLabel: 'Автоматично переходити далі',

@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="Hebrew numbers trainer: digits and words, picking or typing the answer, speech. From 1 to 999." />
+    <meta
+      name="description"
+      content="Hebrew numbers trainer: digits and words, picking or typing the answer, speech. From 1 to 999, and the time on a clock."
+    />
     <title>Misparim · Hebrew numbers</title>
     <link
       rel="icon"
@@ -34,7 +37,13 @@
         <button data-direction="forward" class="active">
           123 → <span lang="he" dir="rtl" class="he">אבג</span><small data-i18n="forwardHint">Digits → words</small></button
         ><button data-direction="reverse">
-          <span lang="he" dir="rtl" class="he">אבג</span> → 123<small data-i18n="reverseHint">Words → digits</small>
+          <span lang="he" dir="rtl" class="he">אבג</span> → 123<small data-i18n="reverseHint">Words → digits</small></button
+        ><button data-direction="clock">
+          <svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.5" />
+            <path d="M12 6.5V12l3.5 2.5" />
+          </svg>
+          → <span lang="he" dir="rtl" class="he">אבג</span><small data-i18n="clockHint">Clock → words</small>
         </button>
       </nav>
       <div class="workspace">
@@ -42,20 +51,38 @@
           <details id="settings">
             <summary data-i18n="settingsTitle">Practice settings</summary>
             <div class="settings-body">
-              <label for="level" data-i18n="rangeLabel">Range</label
-              ><select id="level">
-                <option value="1" data-i18n="level1">1–10 · first numbers</option>
-                <option value="2" data-i18n="level2">10–100 · tens</option>
-                <option value="3" data-i18n="level3">100–999 · hundreds</option></select
-              ><label for="gender" data-i18n="genderLabel">Number form</label
-              ><select id="gender">
-                <option value="f" data-i18n="genderF">Feminine · plain counting</option>
-                <option value="m" data-i18n="genderM">Masculine</option></select
-              ><label class="check"><input type="checkbox" id="auto" /><span data-i18n="autoLabel">Move on automatically</span></label>
-              <p class="setting-note" data-i18n="settingNote">Changing the range or the form starts a new round.</p>
-              <p class="gender-note" data-i18n="genderNote">
+              <div data-settings="numbers">
+                <label for="level" data-i18n="rangeLabel">Range</label
+                ><select id="level">
+                  <option value="1" data-i18n="level1">1–10 · first numbers</option>
+                  <option value="2" data-i18n="level2">10–100 · tens</option>
+                  <option value="3" data-i18n="level3">100–999 · hundreds</option></select
+                ><label for="gender" data-i18n="genderLabel">Number form</label
+                ><select id="gender">
+                  <option value="f" data-i18n="genderF">Feminine · plain counting</option>
+                  <option value="m" data-i18n="genderM">Masculine</option>
+                </select>
+              </div>
+              <div data-settings="clock" hidden>
+                <label for="clock-level" data-i18n="clockLevelLabel">Precision</label
+                ><select id="clock-level">
+                  <option value="hours" data-i18n="clockHours">Whole hours</option>
+                  <option value="quarters" data-i18n="clockQuarters">Quarters and halves</option>
+                  <option value="five" data-i18n="clockFive">Every 5 minutes</option>
+                </select>
+              </div>
+              <label class="check"><input type="checkbox" id="auto" /><span data-i18n="autoLabel">Move on automatically</span></label>
+              <p class="setting-note" data-settings="numbers" data-i18n="settingNote">Changing the range or the form starts a new round.</p>
+              <p class="setting-note" data-settings="clock" data-i18n="clockSettingNote" hidden>
+                Changing the precision starts a new round.
+              </p>
+              <p class="gender-note" data-settings="numbers" data-i18n="genderNote">
                 Without a noun, numbers are said in the feminine form. Masculine forms are practiced separately. Forms used before a noun,
                 such as שני / שתי, are not used here.
+              </p>
+              <p class="gender-note" data-settings="clock" data-i18n="clockNote" hidden>
+                Hours are said in the feminine form, as שעה (“hour”) is feminine. Minutes are said in the masculine form, as in everyday
+                speech. After the half hour, the minutes are counted to the next hour: רבע לארבע is 3:45.
               </p>
             </div>
           </details>
@@ -83,6 +110,10 @@
           <p data-i18n="checkingText">
             Words are typed in Hebrew. Niqqud and extra spaces do not affect the check. Common full and short spellings are accepted. The
             form must match the selected setting. In compound numbers, keep the conjunction ו (“and”).
+          </p>
+          <p data-i18n="checkingClock">
+            Time: hours in the feminine form, minutes in the masculine, or in the feminine with דקות (“minutes”). You may start with השעה
+            (“the time is”) and add בדיוק (“exactly”) after a whole hour.
           </p>
           <p>
             <span data-i18n="rulesLabel">Rules:</span>

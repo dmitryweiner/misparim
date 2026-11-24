@@ -1,5 +1,17 @@
 import { isolateHebrew } from './bidi';
-import { createDeck, isLevel, ROUND_LENGTH, type Direction, type Level, type Method, type Question, type Random } from './game';
+import { acceptsTime, createClockDeck, digitalTime, isClockLevel, timeWords, type ClockLevel } from './clock';
+import { clockFace } from './clock-face';
+import {
+  createDeck,
+  isDirection,
+  isLevel,
+  ROUND_LENGTH,
+  type Direction,
+  type Level,
+  type Method,
+  type Question,
+  type Random,
+} from './game';
 import { detectLocale, isLocale, messages, staticText, type Locale, type Messages } from './i18n';
 import { accepts, words, type Gender } from './numbers';
 import { directionFromHash, hashForDirection } from './route';
@@ -48,6 +60,59 @@ function hintText(t: Messages, n: number, forward: boolean, gender: Gender): str
   return t.hintHundreds(Math.floor(n / 100));
 }
 
+/** What differs between the games: how a question is shown, checked, hinted and spoken. */
+interface Mode {
+  tag: string;
+  prompt: string;
+  inputLabel: string;
+  /** Answers are Hebrew words, typed with the Hebrew keyboard; otherwise digits. */
+  hebrewAnswer: boolean;
+  /** The question can be listened to before answering. */
+  listen: boolean;
+  deck: (random: Random) => Question[];
+  stimulus: (n: number) => string;
+  /** The answer in Hebrew words; vocalized for speech. */
+  say: (n: number, vocalized?: boolean) => string;
+  /** The question in digits: 345 or 3:45. */
+  label: (n: number) => string;
+  accepts: (n: number, raw: string) => boolean;
+  hint: (n: number) => string;
+}
+
+function numberMode(t: Messages, forward: boolean, level: Level, gender: Gender): Mode {
+  const say = (n: number, vocalized = false) => words(n, gender, vocalized);
+  return {
+    tag: gender === 'f' ? t.feminineForm : t.masculineForm,
+    prompt: forward ? t.promptForward : t.promptReverse,
+    inputLabel: forward ? t.inputForward : t.inputReverse,
+    hebrewAnswer: forward,
+    listen: !forward,
+    deck: (random) => createDeck(level, random),
+    stimulus: (n) => (forward ? `<div class="stimulus">${n}</div>` : `<div class="stimulus he" lang="he" dir="rtl">${say(n)}</div>`),
+    say,
+    label: (n) => String(n),
+    accepts: (n, raw) => (forward ? accepts(n, gender, raw) : Number(raw) === n),
+    hint: (n) => hintText(t, n, forward, gender),
+  };
+}
+
+function clockMode(t: Messages, level: ClockLevel): Mode {
+  const levelNames: Record<ClockLevel, string> = { hours: t.clockHours, quarters: t.clockQuarters, five: t.clockFive };
+  return {
+    tag: levelNames[level],
+    prompt: t.promptClock,
+    inputLabel: t.inputClock,
+    hebrewAnswer: true,
+    listen: false,
+    deck: (random) => createClockDeck(level, random),
+    stimulus: (n) => `<div class="stimulus clock">${clockFace(n, t.clockLabel(digitalTime(n)))}</div>`,
+    say: timeWords,
+    label: digitalTime,
+    accepts: acceptsTime,
+    hint: (n) => t.hintClock(digitalTime(n), n % 60),
+  };
+}
+
 /** Translates the static page: texts and labels marked in index.html, title, description and lang. */
 function translatePage(locale: Locale, t: Messages) {
   document.documentElement.lang = locale;
@@ -72,6 +137,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   const game = required('#game', HTMLElement);
   const level = required('#level', HTMLSelectElement);
   const gender = required('#gender', HTMLSelectElement);
+  const clockLevel = required('#clock-level', HTMLSelectElement);
   const auto = required('#auto', HTMLInputElement);
   const settingsPanel = required('#settings', HTMLDetailsElement);
   const localeSelect = required('#locale', HTMLSelectElement);
@@ -95,10 +161,14 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
 
   level.value = settings.level;
   gender.value = settings.gender;
+  clockLevel.value = settings.clockLevel;
   auto.checked = settings.autoNext;
 
   const currentLevel = (): Level => (isLevel(level.value) ? level.value : '1');
   const currentGender = (): Gender => (gender.value === 'm' ? 'm' : 'f');
+  const currentClockLevel = (): ClockLevel => (isClockLevel(clockLevel.value) ? clockLevel.value : 'hours');
+  const currentMode = (): Mode =>
+    direction === 'clock' ? clockMode(t, currentClockLevel()) : numberMode(t, direction === 'forward', currentLevel(), currentGender());
   const isLast = () => index === ROUND_LENGTH - 1;
   const nextLabel = () => (isLast() ? t.result : t.next);
   const statsText = () => [t.ownCount(score), t.hintedCount(helped), t.errorCount(errors.length)].join(' · ');
@@ -131,7 +201,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
 
   function begin() {
     cancelPending();
-    deck = createDeck(currentLevel(), random);
+    deck = currentMode().deck(random);
     index = 0;
     score = 0;
     helped = 0;
@@ -145,42 +215,44 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   function render() {
     markActive('direction', direction);
     markActive('method', method);
+    for (const el of document.querySelectorAll<HTMLElement>('[data-settings]')) {
+      el.hidden = el.dataset.settings !== (direction === 'clock' ? 'clock' : 'numbers');
+    }
     if (index === deck.length) return showResult();
     const q = current();
-    const forward = direction === 'forward';
-    const g = currentGender();
-    const text = words(q.n, g);
+    const mode = currentMode();
+    const hebrew = mode.hebrewAnswer;
     const choiceHTML = `<div class="choices">${q.choices
       .map(
         (n) =>
-          `<button class="choice ${forward ? 'he' : ''}" data-number="${n}" ${forward ? 'lang="he" dir="rtl"' : ''}>${forward ? words(n, g) : n}</button>`,
+          `<button class="choice ${hebrew ? 'he' : ''}" data-number="${n}" ${hebrew ? 'lang="he" dir="rtl"' : ''}>${hebrew ? mode.say(n) : mode.label(n)}</button>`,
       )
       .join('')}</div>`;
     const inputHTML =
-      `<form id="answer-form"><label class="answer-label" for="answer">${forward ? t.inputForward : t.inputReverse}</label>` +
-      `<div class="input-row"><input id="answer" type="text" ${forward ? 'lang="he" dir="rtl" class="he"' : 'inputmode="numeric" dir="ltr"'} autocomplete="off" spellcheck="false" maxlength="100" enterkeyhint="done" aria-describedby="input-error">` +
+      `<form id="answer-form"><label class="answer-label" for="answer">${mode.inputLabel}</label>` +
+      `<div class="input-row"><input id="answer" type="text" ${hebrew ? 'lang="he" dir="rtl" class="he"' : 'inputmode="numeric" dir="ltr"'} autocomplete="off" spellcheck="false" maxlength="100" enterkeyhint="done" aria-describedby="input-error">` +
       `<button type="submit" class="primary">${t.check}</button></div><p id="input-error" class="error" aria-live="polite"></p></form>` +
-      (forward
+      (hebrew
         ? `<button class="keyboard-toggle" id="keyboard-toggle" aria-expanded="false" aria-controls="keyboard">${t.keyboard}</button><div class="keyboard" id="keyboard" hidden></div>`
         : '');
     game.innerHTML =
-      `<div class="round"><span>${t.question(index + 1, ROUND_LENGTH)}</span><span class="tag">${g === 'f' ? t.feminineForm : t.masculineForm}</span></div>` +
+      `<div class="round"><span>${t.question(index + 1, ROUND_LENGTH)}</span><span class="tag">${mode.tag}</span></div>` +
       `<div class="stats" id="stats">${statsText()}</div>` +
       `<div class="progress" role="progressbar" aria-label="${t.progressLabel}" aria-valuemin="0" aria-valuemax="${ROUND_LENGTH}" aria-valuenow="${index}"><i style="width:${(index * 100) / ROUND_LENGTH}%"></i></div>` +
-      `<h1 class="prompt">${forward ? t.promptForward : t.promptReverse}</h1>` +
-      `<div class="stimulus ${forward ? '' : 'he'}" ${forward ? '' : 'lang="he" dir="rtl"'}>${forward ? q.n : text}</div>` +
-      (forward
-        ? ''
-        : `<div class="speech"><button class="sound" id="listen">${t.listen}</button><p class="voice-status" id="voice-status" aria-live="polite"></p></div>`) +
+      `<h1 class="prompt">${mode.prompt}</h1>` +
+      mode.stimulus(q.n) +
+      (mode.listen
+        ? `<div class="speech"><button class="sound" id="listen">${t.listen}</button><p class="voice-status" id="voice-status" aria-live="polite"></p></div>`
+        : '') +
       (method === 'choice' ? choiceHTML : inputHTML) +
       `<div id="feedback" aria-live="polite"></div><button class="hint" id="hint">${t.hint}</button><p class="hinttext" id="hinttext" hidden></p>`;
 
     for (const b of game.querySelectorAll<HTMLButtonElement>('[data-number]')) b.onclick = () => answer(Number(b.dataset.number));
-    if (method === 'input') bindInput(q, forward);
+    if (method === 'input') bindInput(q, hebrew);
     const hint = required('#hinttext', HTMLElement);
     const showHint = () => {
       hint.hidden = false;
-      hint.textContent = hintText(t, q.n, forward, g);
+      hint.textContent = mode.hint(q.n);
       isolateHebrew(hint);
     };
     required('#hint', HTMLButtonElement).onclick = () => {
@@ -189,7 +261,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
       showHint();
     };
     if (q.hint) showHint();
-    if (!forward) {
+    if (mode.listen) {
       required('#listen', HTMLButtonElement).onclick = () => speak(q.n);
       refreshVoiceUI();
     }
@@ -197,7 +269,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
     isolateHebrew(game);
   }
 
-  function bindInput(q: Question, forward: boolean) {
+  function bindInput(q: Question, hebrew: boolean) {
     const field = required('#answer', HTMLInputElement);
     field.value = q.draft;
     field.oninput = () => {
@@ -209,7 +281,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
       q.draft = field.value;
       answer(field.value);
     };
-    if (!forward) return;
+    if (!hebrew) return;
     const keyboard = required('#keyboard', HTMLElement);
     const toggle = required('#keyboard-toggle', HTMLButtonElement);
     const showKeyboard = (open: boolean) => {
@@ -240,6 +312,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   function answer(value: number | string) {
     if (answered || index >= ROUND_LENGTH) return;
     const q = current();
+    const mode = currentMode();
     let ok: boolean;
     if (method === 'input') {
       const raw = String(value).trim();
@@ -248,15 +321,15 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
         error.textContent = t.errorEmpty;
         return;
       }
-      if (direction === 'reverse' && !/^\d+$/.test(raw)) {
+      if (!mode.hebrewAnswer && !/^\d+$/.test(raw)) {
         error.textContent = t.errorDigits;
         return;
       }
-      if (direction === 'forward' && !/[א-ת]/.test(raw)) {
+      if (mode.hebrewAnswer && !/[א-ת]/.test(raw)) {
         error.textContent = t.errorHebrew;
         return;
       }
-      ok = direction === 'forward' ? accepts(q.n, currentGender(), raw) : Number(raw) === q.n;
+      ok = mode.accepts(q.n, raw);
     } else {
       if (typeof value !== 'number' || !q.choices.includes(value)) return;
       q.picked = value;
@@ -275,6 +348,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
 
   /** Shows the answered state of the current question: marked answer, feedback and the next/pause buttons. */
   function showAnswer(q: Question) {
+    const mode = currentMode();
     for (const b of game.querySelectorAll<HTMLButtonElement>('[data-number]')) {
       b.disabled = true;
       const n = Number(b.dataset.number);
@@ -296,7 +370,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
     required('#hinttext', HTMLElement).hidden = true;
     required('#feedback', HTMLElement).innerHTML =
       `<div class="feedback ${q.correct ? 'good' : 'bad'}"><strong>${q.correct ? (q.hint ? t.correctWithHint : t.correct) : t.rememberAnswer}</strong>` +
-      `<div class="correct-answer">${q.n} = ${he(words(q.n, currentGender()))}</div>` +
+      `<div class="correct-answer">${mode.label(q.n)} = ${he(mode.say(q.n))}</div>` +
       `<button class="sound" id="listen">${t.listenAnswer}</button><p class="voice-status" id="voice-status" aria-live="polite"></p>` +
       `<div class="feedback-actions"><button class="primary" id="next"></button><button class="pause" id="pause"></button></div></div>`;
     // Remove the earlier playback controls so every ID remains unique.
@@ -345,7 +419,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   }
 
   function showResult() {
-    const g = currentGender();
+    const mode = currentMode();
     const review = [...new Set([...errors, ...deck.filter((q) => q.hint).map((q) => q.n)])];
     game.innerHTML =
       `<div class="result"><div class="medal">${score >= 8 ? '✦' : '123'}</div><h1>${score === ROUND_LENGTH ? t.perfectRound : t.roundOver}</h1>` +
@@ -353,7 +427,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
       `<div class="result-counts"><span>${t.ownCount(score)}</span><span>${t.hintedCount(helped)}</span><span>${t.errorCount(errors.length)}</span></div>` +
       `<button class="primary" id="again">${t.again}</button>` +
       (review.length
-        ? `<div class="review"><b>${t.review}</b>${review.map((n) => `<p><b>${n}</b>${he(words(n, g))}</p>`).join('')}</div>`
+        ? `<div class="review"><b>${t.review}</b>${review.map((n) => `<p><b>${mode.label(n)}</b>${he(mode.say(n))}</p>`).join('')}</div>`
         : '') +
       '</div>';
     required('#again', HTMLButtonElement).onclick = begin;
@@ -376,7 +450,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
     if (answered) pauseAdvance();
     const call = ++speechId;
     speech.cancel();
-    const utterance = new SpeechSynthesisUtterance(words(n, currentGender(), true));
+    const utterance = new SpeechSynthesisUtterance(currentMode().say(n, true));
     utterance.lang = voice.lang;
     utterance.voice = voice;
     utterance.rate = SPEECH_RATE;
@@ -405,7 +479,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   };
   for (const b of document.querySelectorAll<HTMLElement>('[data-direction]')) {
     b.onclick = () => {
-      direction = b.dataset.direction === 'reverse' ? 'reverse' : 'forward';
+      direction = isDirection(b.dataset.direction) ? b.dataset.direction : 'forward';
       history.replaceState(null, '', hashForDirection(direction));
       begin();
     };
@@ -422,6 +496,10 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
   };
   gender.onchange = () => {
     updateSettings({ gender: currentGender() });
+    begin();
+  };
+  clockLevel.onchange = () => {
+    updateSettings({ clockLevel: currentClockLevel() });
     begin();
   };
   auto.onchange = () => {

@@ -33,7 +33,7 @@ describe('settings storage', () => {
 
   it('saves and loads settings', () => {
     const storage = new MemoryStorage();
-    const settings = { locale: 'uk', level: '3', gender: 'm', autoNext: false } as const;
+    const settings = { locale: 'uk', level: '3', gender: 'm', clockLevel: 'five', autoNext: false } as const;
     saveSettings(storage, settings);
     expect(loadSettings(storage)).toEqual(settings);
   });
@@ -51,7 +51,17 @@ describe('settings storage', () => {
 
   it('replaces only invalid fields with defaults', () => {
     const storage = new MemoryStorage();
-    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, settings: { locale: 'de', level: '2', gender: 'x', autoNext: 'yes' } }));
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, settings: { locale: 'de', level: '2', gender: 'x', clockLevel: 'minutes', autoNext: 'yes' } }),
+    );
     expect(loadSettings(storage)).toEqual({ ...DEFAULT_SETTINGS, level: '2' });
+  });
+
+  it('starts the clock with whole hours, also for settings saved before the clock', () => {
+    expect(DEFAULT_SETTINGS.clockLevel).toBe('hours');
+    const storage = new MemoryStorage();
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, settings: { locale: 'ru', level: '3', gender: 'm', autoNext: true } }));
+    expect(loadSettings(storage)).toEqual({ locale: 'ru', level: '3', gender: 'm', clockLevel: 'hours', autoNext: true });
   });
 });

@@ -1,8 +1,9 @@
 export type Random = () => number;
 export type Level = '1' | '2' | '3';
-export type Direction = 'forward' | 'reverse';
+export type Direction = 'forward' | 'reverse' | 'clock';
 export type Method = 'choice' | 'input';
 
+export const DIRECTIONS: readonly Direction[] = ['forward', 'reverse', 'clock'];
 export const ROUND_LENGTH = 10;
 export const CHOICE_COUNT = 4;
 
@@ -40,6 +41,10 @@ export function shuffle<T>(items: readonly T[], rng: Random): T[] {
 
 export function bounds(level: Level): [number, number] {
   return level === '1' ? [1, 10] : level === '2' ? [10, 100] : [100, 999];
+}
+
+export function isDirection(value: unknown): value is Direction {
+  return DIRECTIONS.some((direction) => direction === value);
 }
 
 export function isLevel(value: unknown): value is Level {

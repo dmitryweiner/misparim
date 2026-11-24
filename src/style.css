@@ -113,6 +113,16 @@ nav button.active {
   color: white;
   border-color: #294edb;
 }
+.clock-icon {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .workspace {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
@@ -133,7 +143,7 @@ summary {
 .settings-body {
   padding: 0 20px 20px;
 }
-.settings-body > label:not(.check) {
+.settings-body label:not(.check) {
   display: block;
   margin: 16px 0 9px;
   font-size: 14px;
@@ -262,6 +272,48 @@ select {
 .stimulus.he {
   font-size: 36px;
   padding: 16px 0;
+}
+.stimulus.clock {
+  padding: 8px 0;
+}
+.clock-face {
+  width: 210px;
+  height: 210px;
+}
+.clock-face .dial {
+  fill: #f8faff;
+  stroke: #294edb;
+  stroke-width: 4;
+}
+.clock-face .tick {
+  stroke: #a3b0cc;
+  stroke-width: 1.5;
+}
+.clock-face .tick.major {
+  stroke: #17223e;
+  stroke-width: 3;
+}
+.clock-face text {
+  font:
+    700 17px Arial,
+    sans-serif;
+  fill: #17223e;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.clock-face .hand {
+  stroke-linecap: round;
+}
+.clock-face .hour-hand {
+  stroke: #17223e;
+  stroke-width: 7;
+}
+.clock-face .minute-hand {
+  stroke: #294edb;
+  stroke-width: 4;
+}
+.clock-face .pin {
+  fill: #17223e;
 }
 .speech {
   text-align: center;
@@ -534,8 +586,8 @@ footer p {
   nav button {
     flex: 1;
     min-width: 0;
-    padding: 8px;
-    font-size: 20px;
+    padding: 8px 4px;
+    font-size: 17px;
   }
   nav small {
     font-size: 12px;
@@ -574,6 +626,10 @@ footer p {
   .stimulus {
     min-height: 96px;
     font-size: 64px;
+  }
+  .clock-face {
+    width: 180px;
+    height: 180px;
   }
   .stimulus.he {
     font-size: 29px;

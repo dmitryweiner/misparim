@@ -321,9 +321,10 @@ describe('clock', () => {
     expect($('[data-direction="clock"]').classList.contains('active')).toBe(true);
     expect(document.querySelector('.stimulus .clock-face')).not.toBeNull();
     expect(textOf('.prompt')).toBe('What time does the clock show?');
-    expect(textOf('.tag')).toBe('Whole hours');
+    expect(textOf('.tag')).toBe('Quarters and halves');
+    expect([...$('#clock-level', HTMLSelectElement).options].map((o) => o.value)).toEqual(['quarters', 'five']);
     const time = currentTime();
-    expect(time % 60).toBe(0);
+    expect(time % 15).toBe(0);
     expect(textOf(`[data-number="${time}"]`)).toBe(timeWords(time));
     for (const b of document.querySelectorAll('[data-number]')) expect(b.getAttribute('lang')).toBe('he');
   });
@@ -377,11 +378,10 @@ describe('clock', () => {
   });
 
   it('restores the saved precision', () => {
-    saveSettings(storage, { ...DEFAULT_SETTINGS, clockLevel: 'quarters' });
+    saveSettings(storage, { ...DEFAULT_SETTINGS, clockLevel: 'five' });
     openClock();
-    expect($('#clock-level', HTMLSelectElement).value).toBe('quarters');
-    expect(textOf('.tag')).toBe('Quarters and halves');
-    expect(currentTime() % 15).toBe(0);
+    expect($('#clock-level', HTMLSelectElement).value).toBe('five');
+    expect(textOf('.tag')).toBe('Every 5 minutes');
   });
 
   it('accepts the time typed in Hebrew words', () => {
@@ -424,7 +424,7 @@ describe('clock', () => {
     selectLocale('ru');
     expect(currentTime()).toBe(time);
     expect(textOf('.prompt')).toBe('Сколько времени показывают часы?');
-    expect(textOf('.tag')).toBe('Целые часы');
+    expect(textOf('.tag')).toBe('Четверти и половины');
   });
 });
 

@@ -10,8 +10,8 @@ and telling the time from a clock face.
 - A game can be linked to: `#number-first` (digits → words), `#word-first` (words → digits)
   or `#clock` (clock → words).
 - Ranges: 1–10, 10–100, 100–999. Feminine and masculine forms.
-- The clock is said as in everyday speech: שלוש ורבע, רבע לארבע. Precision: whole hours,
-  quarters and halves, every 5 minutes.
+- The clock is said as in everyday speech: שלוש ורבע, רבע לארבע. Precision: quarters and
+  halves, every 5 minutes.
 - Hints; answers with a hint are counted separately.
 - Optional automatic advance to the next question (off by default, can be paused).
 - On-screen Hebrew keyboard.

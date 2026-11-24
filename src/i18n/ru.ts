@@ -21,7 +21,6 @@ export const ru = {
   genderF: 'Женская · обычный счёт',
   genderM: 'Мужская',
   clockLevelLabel: 'Точность',
-  clockHours: 'Целые часы',
   clockQuarters: 'Четверти и половины',
   clockFive: 'Каждые 5 минут',
   autoLabel: 'Автоматически переходить дальше',

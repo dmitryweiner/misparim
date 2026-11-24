@@ -2,10 +2,10 @@ import { CHOICE_COUNT, ROUND_LENGTH, shuffle, type Question, type Random } from 
 import { normalize, withAnd, words } from './numbers';
 
 // A time is the number of minutes past twelve on a twelve-hour face: 0–719, in steps of five.
-export type ClockLevel = 'hours' | 'quarters' | 'five';
+export type ClockLevel = 'quarters' | 'five';
 
-export const CLOCK_LEVELS: readonly ClockLevel[] = ['hours', 'quarters', 'five'];
-const STEPS: Record<ClockLevel, number> = { hours: 60, quarters: 15, five: 5 };
+export const CLOCK_LEVELS: readonly ClockLevel[] = ['quarters', 'five'];
+const STEPS: Record<ClockLevel, number> = { quarters: 15, five: 5 };
 const DAY = 720;
 
 export function isClockLevel(value: unknown): value is ClockLevel {

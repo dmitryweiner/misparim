@@ -97,7 +97,7 @@ function numberMode(t: Messages, forward: boolean, level: Level, gender: Gender)
 }
 
 function clockMode(t: Messages, level: ClockLevel): Mode {
-  const levelNames: Record<ClockLevel, string> = { hours: t.clockHours, quarters: t.clockQuarters, five: t.clockFive };
+  const levelNames: Record<ClockLevel, string> = { quarters: t.clockQuarters, five: t.clockFive };
   return {
     tag: levelNames[level],
     prompt: t.promptClock,
@@ -166,7 +166,7 @@ export function startApp({ random = Math.random, speech = null, storage = null, 
 
   const currentLevel = (): Level => (isLevel(level.value) ? level.value : '1');
   const currentGender = (): Gender => (gender.value === 'm' ? 'm' : 'f');
-  const currentClockLevel = (): ClockLevel => (isClockLevel(clockLevel.value) ? clockLevel.value : 'hours');
+  const currentClockLevel = (): ClockLevel => (isClockLevel(clockLevel.value) ? clockLevel.value : 'quarters');
   const currentMode = (): Mode =>
     direction === 'clock' ? clockMode(t, currentClockLevel()) : numberMode(t, direction === 'forward', currentLevel(), currentGender());
   const isLast = () => index === ROUND_LENGTH - 1;

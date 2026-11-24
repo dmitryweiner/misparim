@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startApp } from './app';
+import { digitalTime, timeWords } from './clock';
 import { seededRandom } from './game';
 import { LOCALE_NAMES, LOCALES } from './i18n';
 import { words } from './numbers';
@@ -66,6 +67,12 @@ function currentNumber(): number {
   if (!stimulus.classList.contains('he')) return Number(stimulus.textContent);
   for (let n = 1; n <= 999; n++) if (words(n, 'f') === stimulus.textContent) return n;
   throw new Error('unknown stimulus');
+}
+
+/** The time on the clock face: the hour hand turns half a degree a minute. */
+function currentTime(): number {
+  const transform = $('.hour-hand', SVGElement).getAttribute('transform') ?? '';
+  return Number(/^rotate\(([\d.]+) /.exec(transform)?.[1]) * 2;
 }
 
 /** Turns on the auto-advance, which is off by default. */
@@ -299,6 +306,128 @@ describe('direction in the URL', () => {
   });
 });
 
+function openClock(speech: Speech | null = null) {
+  start(speech);
+  click('[data-direction="clock"]');
+}
+
+/** The settings shown for one kind of game: numbers or clock. */
+const settingsFor = (game: string) => [...document.querySelectorAll<HTMLElement>(`[data-settings="${game}"]`)];
+
+describe('clock', () => {
+  it('shows a clock face and the time in Hebrew words as choices', () => {
+    openClock();
+    expect(location.hash).toBe('#clock');
+    expect($('[data-direction="clock"]').classList.contains('active')).toBe(true);
+    expect(document.querySelector('.stimulus .clock-face')).not.toBeNull();
+    expect(textOf('.prompt')).toBe('What time does the clock show?');
+    expect(textOf('.tag')).toBe('Whole hours');
+    const time = currentTime();
+    expect(time % 60).toBe(0);
+    expect(textOf(`[data-number="${time}"]`)).toBe(timeWords(time));
+    for (const b of document.querySelectorAll('[data-number]')) expect(b.getAttribute('lang')).toBe('he');
+  });
+
+  it('opens from the hash', () => {
+    setHash('#clock');
+    start();
+    expect($('[data-direction="clock"]').classList.contains('active')).toBe(true);
+    expect(document.querySelector('.clock-face')).not.toBeNull();
+  });
+
+  it('labels the clock face with the time for screen readers', () => {
+    openClock();
+    expect($('.clock-face', SVGElement).getAttribute('aria-label')).toBe(`Clock showing ${digitalTime(currentTime())}`);
+  });
+
+  it('shows the right answer with the time in digits', () => {
+    openClock();
+    const time = currentTime();
+    click(`[data-number="${time}"]`);
+    expect(textOf('.feedback strong')).toBe('Correct!');
+    expect(textOf('.correct-answer')).toBe(`${digitalTime(time)} = ${timeWords(time)}`);
+  });
+
+  it('hints with the time in digits', () => {
+    openClock();
+    click('#hint');
+    expect(textOf('#hinttext')).toContain(`It is ${digitalTime(currentTime())}.`);
+  });
+
+  it('shows the precision setting instead of the range and the form', () => {
+    start();
+    expect(settingsFor('clock').every((el) => el.hidden)).toBe(true);
+    expect(settingsFor('numbers').some((el) => el.hidden)).toBe(false);
+    click('[data-direction="clock"]');
+    expect(settingsFor('clock').some((el) => el.hidden)).toBe(false);
+    expect(settingsFor('numbers').every((el) => el.hidden)).toBe(true);
+    click('[data-direction="reverse"]');
+    expect(settingsFor('clock').every((el) => el.hidden)).toBe(true);
+  });
+
+  it('starts a new round with the chosen precision and remembers it', () => {
+    openClock();
+    click(`[data-number="${currentTime()}"]`);
+    const precision = $('#clock-level', HTMLSelectElement);
+    precision.value = 'five';
+    precision.dispatchEvent(new Event('change'));
+    expect(textOf('.tag')).toBe('Every 5 minutes');
+    expect(textOf('#stats')).toContain('On your own: 0');
+    expect(loadSettings(storage).clockLevel).toBe('five');
+  });
+
+  it('restores the saved precision', () => {
+    saveSettings(storage, { ...DEFAULT_SETTINGS, clockLevel: 'quarters' });
+    openClock();
+    expect($('#clock-level', HTMLSelectElement).value).toBe('quarters');
+    expect(textOf('.tag')).toBe('Quarters and halves');
+    expect(currentTime() % 15).toBe(0);
+  });
+
+  it('accepts the time typed in Hebrew words', () => {
+    openClock();
+    click('[data-method="input"]');
+    expect(textOf('.answer-label')).toBe('Write the time in Hebrew words');
+    expect(document.querySelector('#keyboard-toggle')).not.toBeNull();
+    typeAnswer('3:00');
+    expect(textOf('#input-error')).toContain('in Hebrew words');
+    typeAnswer('השעה ' + timeWords(currentTime()));
+    expect(textOf('.feedback strong')).toBe('Correct!');
+  });
+
+  it('speaks the vocalized time after answering', () => {
+    const speech = fakeSpeech([{ lang: 'he-IL' }]);
+    openClock(speech);
+    expect(document.querySelector('#listen')).toBeNull();
+    const time = currentTime();
+    click(`[data-number="${time}"]`);
+    click('#listen');
+    const utterance = speech.speak.mock.calls[0]?.[0] as unknown as FakeUtterance;
+    expect(utterance.text).toBe(timeWords(time, true));
+  });
+
+  it('reviews the missed times on the result screen', () => {
+    openClock();
+    const missed = currentTime();
+    click(`[data-number]:not([data-number="${missed}"])`);
+    click('#next');
+    for (let i = 1; i < 10; i++) {
+      click(`[data-number="${currentTime()}"]`);
+      click('#next');
+    }
+    expect([...document.querySelectorAll('.review p')].map((p) => p.textContent)).toEqual([digitalTime(missed) + timeWords(missed)]);
+  });
+
+  it('keeps the clock when the language changes', () => {
+    openClock();
+    const time = currentTime();
+    selectLocale('ru');
+    expect(currentTime()).toBe(time);
+    expect(textOf('.prompt')).toBe('Сколько времени показывают часы?');
+    expect(textOf('.tag')).toBe('Целые часы');
+  });
+});
+
 describe('input mode', () => {
   beforeEach(() => {
     start();
@@ -340,7 +469,7 @@ describe('input mode', () => {
 
 describe('settings storage', () => {
   it('restores saved settings', () => {
-    saveSettings(storage, { locale: null, level: '3', gender: 'm', autoNext: false });
+    saveSettings(storage, { ...DEFAULT_SETTINGS, level: '3', gender: 'm' });
     start();
     expect($('#level', HTMLSelectElement).value).toBe('3');
     expect($('#gender', HTMLSelectElement).value).toBe('m');
@@ -481,6 +610,7 @@ describe('Hebrew inside interface texts', () => {
     start();
     expect(hebrewIn('[data-direction="forward"]')).toEqual(['אבג']);
     expect(hebrewIn('[data-direction="reverse"]')).toEqual(['אבג']);
+    expect(hebrewIn('[data-direction="clock"]')).toEqual(['אבג']);
   });
 
   it('marks them again after switching the language', () => {

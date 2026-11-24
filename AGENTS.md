@@ -1,6 +1,6 @@
 # Agents guide
 
-Misparim is a static game for learning Hebrew numbers from 1 to 999.
+Misparim is a static game for learning Hebrew numbers from 1 to 999 and telling the time.
 TypeScript + Vite, tests with Vitest. Interface languages: English (default), Russian, Ukrainian.
 
 ## Language
@@ -43,21 +43,26 @@ Each feature gets its own branch and a pull request on GitHub.
 - `src/numbers.ts` — Hebrew spelling of numbers (`words`) and answer checking
   (`normalize`, `accepts`). `src/fixtures/words.golden.json` holds every spelling
   produced by the original implementation; the test compares against it.
-- `src/game.ts` — ranges, answer choices and round decks; `seededRandom` for tests.
+- `src/game.ts` — directions, ranges, answer choices and round decks; `seededRandom` for tests.
+- `src/clock.ts` — the clock game: a time is minutes past twelve (0–719); how it is said
+  (`timeWords`: hours feminine, minutes masculine, after the half hour `… ל` the next hour),
+  accepted variants (`acceptsTime`), look-alike choices and decks per precision level.
+  `src/clock-face.ts` — the SVG markup of the clock face.
 - `src/bidi.ts` — wraps Hebrew fragments inside interface texts in `lang="he" dir="rtl"`
   spans (word order in left-to-right text, Hebrew font, screen readers).
-- `src/route.ts` — the direction in the URL hash (`#number-first`, `#word-first`).
+- `src/route.ts` — the direction in the URL hash (`#number-first`, `#word-first`, `#clock`).
 - `src/speech.ts` — finding a Hebrew voice in the browser speech synthesizer.
 - `src/i18n/` — interface languages: `en.ts` (default, defines the `Messages` type),
   `ru.ts`, `uk.ts`; `index.ts` — locale detection and lookup; `plural.ts` — plural forms
   via `Intl.PluralRules`.
-- `src/storage.ts` — settings (language, range, form, auto-advance) in localStorage,
+- `src/storage.ts` — settings (language, range, form, clock precision, auto-advance) in localStorage,
   versioned and validated; unreadable data falls back to defaults.
 - `src/pwa.ts` — service worker registration, an update check on every return to the page
   and a reload when a new version takes control; `src/sw-plugin.ts` — a Vite plugin that
   generates `sw.js` with the list of all build files for offline use. The new worker takes
   over at once (`skipWaiting`): phones never close pages, so a waiting one never activates.
-- `src/app.ts` — DOM and game flow; `src/main.ts` — entry point.
+- `src/app.ts` — DOM and game flow; what differs between the games (stimulus, answer text,
+  check, hint, speech) is a `Mode`; `src/main.ts` — entry point.
 - `src/style.css` — styles; `src/fonts/` — the Noto Sans Hebrew font.
 - `public/` — files copied to the build as is: font license, web app manifest, icons.
 - Tests live next to the code: `*.test.ts`. DOM tests use jsdom
@@ -78,6 +83,7 @@ Each feature gets its own branch and a pull request on GitHub.
 - The interface language is the saved choice, else the first supported browser language,
   else English. Switching the language redraws the screen without restarting the round.
 - Do not change the format of saved data without bumping the version in `src/storage.ts`
-  and adding a test for the reset.
+  and adding a test for the reset. A new field that falls back to its default on older data
+  needs no new version, only a test for that fallback.
 - Changing a spelling in `words` is a deliberate change: update the golden file
   together with a test that explains why.

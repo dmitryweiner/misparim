@@ -1,12 +1,17 @@
 # [Misparim — Hebrew numbers](https://dmitryweiner.github.io/misparim/)
 
-A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and back.
+A trainer for Hebrew cardinal numbers from 1 to 999: from digits to words and back,
+and telling the time from a clock face.
 
 ## Features
 
-- Four modes: digits → words and words → digits, picking from four choices or typing the answer.
-- The direction can be linked to: `#number-first` (digits → words) or `#word-first` (words → digits).
+- Three games: digits → words, words → digits and clock → words; in each, pick from four
+  choices or type the answer.
+- A game can be linked to: `#number-first` (digits → words), `#word-first` (words → digits)
+  or `#clock` (clock → words).
 - Ranges: 1–10, 10–100, 100–999. Feminine and masculine forms.
+- The clock is said as in everyday speech: שלוש ורבע, רבע לארבע. Precision: whole hours,
+  quarters and halves, every 5 minutes.
 - Hints; answers with a hint are counted separately.
 - Optional automatic advance to the next question (off by default, can be paused).
 - On-screen Hebrew keyboard.

@@ -65,9 +65,10 @@ describe('normalize', () => {
     expect(normalize('  \u200fעֶשְׂרִים־וְאַחַת  ')).toBe('עשרים ואחת');
   });
 
-  it('unifies spelling variants, also after ו', () => {
+  it('unifies spelling variants, also after ו and ל', () => {
     expect(normalize('שלשים ושלש')).toBe('שלושים ושלוש');
     expect(normalize('מאתים')).toBe('מאתיים');
+    expect(normalize('רבע לשלש')).toBe('רבע לשלוש');
   });
 });
 

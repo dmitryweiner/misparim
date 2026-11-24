@@ -1,3 +1,4 @@
+import { isClockLevel, type ClockLevel } from './clock';
 import { isLevel, type Level } from './game';
 import { isLocale, type Locale } from './i18n';
 import { isGender, type Gender } from './numbers';
@@ -7,15 +8,17 @@ export interface Settings {
   locale: Locale | null;
   level: Level;
   gender: Gender;
+  clockLevel: ClockLevel;
   autoNext: boolean;
 }
 
 export type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 export const STORAGE_KEY = 'misparim';
+// A new field falls back to its default on older data, so it needs no new version.
 const VERSION = 1;
 
-export const DEFAULT_SETTINGS: Settings = { locale: null, level: '1', gender: 'f', autoNext: false };
+export const DEFAULT_SETTINGS: Settings = { locale: null, level: '1', gender: 'f', clockLevel: 'hours', autoNext: false };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -26,11 +29,12 @@ export function loadSettings(storage: KeyValueStorage | null): Settings {
     if (!raw) return { ...DEFAULT_SETTINGS };
     const data: unknown = JSON.parse(raw);
     if (!isRecord(data) || data.version !== VERSION || !isRecord(data.settings)) return { ...DEFAULT_SETTINGS };
-    const { locale, level, gender, autoNext } = data.settings;
+    const { locale, level, gender, clockLevel, autoNext } = data.settings;
     return {
       locale: isLocale(locale) ? locale : DEFAULT_SETTINGS.locale,
       level: isLevel(level) ? level : DEFAULT_SETTINGS.level,
       gender: isGender(gender) ? gender : DEFAULT_SETTINGS.gender,
+      clockLevel: isClockLevel(clockLevel) ? clockLevel : DEFAULT_SETTINGS.clockLevel,
       autoNext: typeof autoNext === 'boolean' ? autoNext : DEFAULT_SETTINGS.autoNext,
     };
   } catch {

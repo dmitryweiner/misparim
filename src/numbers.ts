@@ -76,7 +76,7 @@ function at(list: readonly string[], i: number): string {
 }
 
 /** Prefixes the conjunction ו ("and"); vocalized as וּ before a shva, otherwise וְ. */
-function withAnd(word: string, vocalized: boolean): string {
+export function withAnd(word: string, vocalized: boolean): string {
   if (!vocalized) return 'ו' + word;
   return (word.startsWith('שְׁ') ? 'וּ' : 'וְ') + word;
 }
@@ -113,7 +113,7 @@ export function words(n: number, gender: Gender = 'f', vocalized = false): strin
   return head + ' ' + (rest < 20 || rest % 10 === 0 ? withAnd(tail, vocalized) : tail);
 }
 
-/** Strips niqqud, direction marks and extra spaces; unifies spelling variants. */
+/** Strips niqqud, direction marks and extra spaces; unifies spelling variants, also after ו ("and") and ל ("to"). */
 export function normalize(input: string): string {
   return input
     .normalize('NFKC')
@@ -124,7 +124,7 @@ export function normalize(input: string): string {
     .replace(/\s+/g, ' ')
     .split(' ')
     .map((token) => {
-      const prefix = token.startsWith('ו') ? 'ו' : '';
+      const prefix = /^[ול]/.test(token) ? token.slice(0, 1) : '';
       const word = prefix ? token.slice(1) : token;
       return prefix + (spellingVariants[word] ?? word);
     })
